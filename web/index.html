@@ -18,19 +18,42 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Generador multi-canal de frecuencias con síntesis en tiempo real.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="tone_generator">
+  <meta name="apple-mobile-web-app-title" content="Tone Generator">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>tone_generator</title>
+  <title>Tone Generator</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Link previews (WhatsApp, Telegram, etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Tone Generator">
+  <meta property="og:description" content="Te compartieron una sesión. Abrila en Tone Generator: generador multi-canal de frecuencias.">
+  <meta property="og:image" content="https://federicorandazzo.com.ar/tone-generator/icons/Icon-512.png">
+  <meta name="twitter:card" content="summary">
+
+  <script>
+    // Installed PWA (desktop Chrome/Edge): with launch_handler "focus-existing",
+    // shared links are delivered to the open window through launchQueue.
+    // Flutter registers window._toneGenOnShare; until then, IDs are queued.
+    window._toneGenPendingShares = [];
+    if ('launchQueue' in window) {
+      window.launchQueue.setConsumer(function (params) {
+        if (!params || !params.targetURL) return;
+        var id = new URL(params.targetURL).searchParams.get('share');
+        if (!id) return;
+        if (typeof window._toneGenOnShare === 'function') window._toneGenOnShare(id);
+        else window._toneGenPendingShares.push(id);
+      });
+    }
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
