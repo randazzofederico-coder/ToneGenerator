@@ -47,6 +47,10 @@ class ToneGeneratorProvider extends ChangeNotifier {
   /// State key of the active session as last saved/opened.
   String? _savedSnapshot;
 
+  /// Incremented whenever all channels are replaced (open / new / restore),
+  /// so stale undo actions can't touch a different session.
+  int _generation = 0;
+
   // --- Working state persistence ---
   static const _workingStateKey = 'tone_working_state';
   Timer? _saveTimer;
@@ -128,8 +132,11 @@ class ToneGeneratorProvider extends ChangeNotifier {
     return id;
   }
 
-  void removeChannel(String id) {
-    _channels.removeWhere((ch) => ch.id == id);
+  /// Removes a channel. Returns what is needed to undo it (or null).
+  ({ToneChannel channel, int index, int generation})? removeChannel(String id) {
+    final index = _channels.indexWhere((ch) => ch.id == id);
+    if (index < 0) return null;
+    final removed = _channels.removeAt(index);
     if (_isReady) {
       _mixer.removeOscillator(id);
     }
@@ -138,6 +145,18 @@ class ToneGeneratorProvider extends ChangeNotifier {
       _selectedChannelId = _channels.isNotEmpty ? _channels.last.id : null;
     }
     _changed();
+    return (channel: removed, index: index, generation: _generation);
+  }
+
+  /// Undo of [removeChannel]. Ignored if another session was loaded since
+  /// ([generation] changed) or the channel is already back.
+  bool restoreChannel(ToneChannel ch, int index, int generation) {
+    if (generation != _generation || _findChannel(ch.id) != null) return false;
+    _channels.insert(index.clamp(0, _channels.length), ch);
+    if (_isReady) _addToMixer(ch);
+    _selectedChannelId = ch.id;
+    _changed();
+    return true;
   }
 
   void setFrequency(String id, double freq) {
@@ -336,15 +355,20 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (_isReady) {
       _mixer.setMasterVolume(_masterVolume);
       for (final ch in _channels) {
-        _mixer.addOscillator(ch.id, ch.frequency, ch.waveformIndex);
-        _mixer.setOscillatorVolume(ch.id, ch.volume);
-        _mixer.setOscillatorPan(ch.id, ch.pan);
-        _mixer.setOscillatorMute(ch.id, ch.muted);
-        _mixer.setOscillatorSolo(ch.id, ch.solo);
-        _mixer.setOscillatorPhaseInvert(ch.id, ch.phaseInvert);
+        _addToMixer(ch);
       }
     }
     _selectedChannelId = _channels.isNotEmpty ? _channels.first.id : null;
+    _generation++;
+  }
+
+  void _addToMixer(ToneChannel ch) {
+    _mixer.addOscillator(ch.id, ch.frequency, ch.waveformIndex);
+    _mixer.setOscillatorVolume(ch.id, ch.volume);
+    _mixer.setOscillatorPan(ch.id, ch.pan);
+    _mixer.setOscillatorMute(ch.id, ch.muted);
+    _mixer.setOscillatorSolo(ch.id, ch.solo);
+    _mixer.setOscillatorPhaseInvert(ch.id, ch.phaseInvert);
   }
 
   String _stateKeyFor(List<Map<String, dynamic>> channels, double master) =>

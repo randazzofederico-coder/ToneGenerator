@@ -12,15 +12,21 @@ import 'deep_link_service.dart';
 /// Session flows shared by the main screen and the library:
 /// save / save as / open / new, protecting unsaved changes.
 
+/// Shows a short message, replacing the current one. With an action (e.g.
+/// DESHACER) it still auto-hides: since Flutter 3.32 snackbars with an action
+/// persist by default, so `persist: false` is set explicitly.
 void showAppSnack(BuildContext context, String message,
     {String? actionLabel, VoidCallback? onAction, bool error = false}) {
   final messenger = ScaffoldMessenger.of(context);
+  final hasAction = actionLabel != null && onAction != null;
   messenger.hideCurrentSnackBar();
   messenger.showSnackBar(SnackBar(
     content: Text(message),
     backgroundColor: error ? AppColors.danger : AppColors.surfaceHigh,
     behavior: SnackBarBehavior.floating,
-    action: (actionLabel != null && onAction != null)
+    persist: false,
+    duration: Duration(seconds: hasAction ? 5 : 3),
+    action: hasAction
         ? SnackBarAction(
             label: actionLabel,
             textColor: AppColors.secondary,
@@ -217,6 +223,47 @@ Future<void> startNewSession(BuildContext context) async {
   if (!await protectUnsavedChanges(context)) return;
   if (!context.mounted) return;
   context.read<ToneGeneratorProvider>().newSession();
+}
+
+/// Renames the open session (tap on its name). An unsaved session is saved
+/// with the chosen name instead.
+Future<void> renameCurrentSession(BuildContext context) async {
+  final tone = context.read<ToneGeneratorProvider>();
+  final library = context.read<SessionProvider>();
+  await library.ensureLoaded;
+  if (!context.mounted) return;
+
+  final id = tone.activeSessionId;
+  final stored = id == null ? null : library.getSessionById(id);
+  if (stored == null) {
+    await saveCurrentSessionAs(context);
+    return;
+  }
+
+  final name = await askSessionName(
+    context,
+    title: 'Renombrar sesión',
+    initial: stored.name,
+    confirmLabel: 'RENOMBRAR',
+    exceptId: stored.id,
+  );
+  if (name == null || name == stored.name) return;
+  await library.renameSession(stored.id, name);
+  if (tone.activeSessionId == stored.id) tone.renameActive(name);
+}
+
+/// Removes a channel offering DESHACER.
+void removeChannelWithUndo(BuildContext context, String channelId) {
+  final tone = context.read<ToneGeneratorProvider>();
+  final removed = tone.removeChannel(channelId);
+  if (removed == null) return;
+  showAppSnack(
+    context,
+    'Canal eliminado',
+    actionLabel: 'DESHACER',
+    onAction: () => tone.restoreChannel(
+        removed.channel, removed.index, removed.generation),
+  );
 }
 
 // ── Sharing ────────────────────────────────────────────────────────────────

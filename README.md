@@ -42,7 +42,10 @@ Aplicación profesional para generar tonos de prueba, calibrar equipos de audio,
 
 ### 📚 Biblioteca de sesiones
 - **Sesión** = canales (frecuencia, onda, volumen, paneo, M/S/Ø) + Master Volume
-- 💾 guarda sobre la sesión abierta (snackbar con *DESHACER*); si no existe pide un nombre. Menú ⋮: *Guardar como…*, *Nueva sesión*, *Biblioteca*, *Compartir sesión*, *Ajustes*
+- 💾 guarda sobre la sesión abierta (snackbar con *DESHACER*); si no existe pide un nombre. Al lado, **compartir** la sesión abierta. Menú ⋮: *Guardar como…*, *Nueva sesión*, *Biblioteca*, *Ajustes*
+- **Tocar el nombre** de la sesión (barra superior) la renombra; si todavía no está guardada, pide un nombre y la guarda
+- **Eliminar un canal** muestra *DESHACER* (vuelve a su posición; se ignora si mientras tanto se abrió otra sesión)
+- **Snackbars** — todos pasan por `showAppSnack` (`services/session_actions.dart`): reemplazan al anterior y se ocultan solos (3 s, o 5 s con *DESHACER*). Desde Flutter 3.32 un SnackBar con acción queda fijo por defecto, por eso se fuerza `persist: false`
 - **Cambios sin guardar** — el nombre en la barra superior se muestra en *cursiva* con `*`. Abrir otra sesión o crear una nueva ofrece *Guardar / Descartar / Cancelar*
 - **Biblioteca** (`screens/library_screen.dart`) — búsqueda por nombre; tocar = abrir; menú ⋮: abrir, compartir, duplicar, renombrar, eliminar (confirmación + *DESHACER*). La sesión abierta se marca *Abierta*
 - **Estado de trabajo persistente** — lo que está cargado se guarda solo (SharedPreferences, `tone_working_state`) y se restaura al reabrir la app
@@ -78,21 +81,15 @@ createdAt, expiresAt
 ```
 
 #### Reglas de seguridad (Firebase Console → Firestore → Reglas)
-> Las reglas se editan a mano en Firebase Console; este bloque es la referencia. Va dentro de `match /databases/{database}/documents { … }`, junto al de `shared_links` del Metrónomo.
+> Las reglas se editan a mano en Firebase Console; este bloque es la referencia (sección 5 de las reglas publicadas). Usa el helper `esAdmin()` definido al principio de `match /databases/{database}/documents { … }`.
 
 ```
 match /tone_shared_links/{linkId} {
-  function isAdmin() {
-    return request.auth != null
-      && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
-      && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
-  }
-
   // Cualquiera puede abrir un link por ID (app, web, futuro foro)
   allow get: if true;
 
   // Solo admin, o la limpieza de links ya vencidos
-  allow list: if isAdmin()
+  allow list: if esAdmin()
     || (resource.data.expiresAt < request.time && request.query.limit <= 20);
 
   allow create: if request.auth != null
@@ -107,12 +104,12 @@ match /tone_shared_links/{linkId} {
          ['v', 'type', 'name', 'ownerUid', 'summary', 'payload', 'createdAt', 'expiresAt']);
 
   // Renovar TTL: solo `expiresAt`, con tope de ~31 días
-  allow update: if isAdmin()
+  allow update: if esAdmin()
     || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['expiresAt'])
         && request.resource.data.expiresAt is timestamp
         && request.resource.data.expiresAt < request.time + duration.value(31, 'd'));
 
-  allow delete: if isAdmin()
+  allow delete: if esAdmin()
     || (request.auth != null && resource.data.ownerUid == request.auth.uid)
     || resource.data.expiresAt < request.time;
 }
@@ -225,7 +222,7 @@ flutter run -d chrome
 flutter run
 
 # Tests
-flutter test test/sharing_test.dart
+flutter test test/sharing_test.dart test/session_ui_test.dart
 
 # El motor nativo (C++/FFI) no requiere recompilación para cambios web
 ```

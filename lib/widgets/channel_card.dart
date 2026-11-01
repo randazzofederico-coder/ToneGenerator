@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/channel_model.dart';
 import '../providers/tone_generator_provider.dart';
+import '../services/session_actions.dart';
 import '../theme/ui_scale.dart';
 import 'mini_knob.dart';
 
@@ -174,7 +175,7 @@ class _IdentityRow extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         // Delete
-        _DeleteButton(onTap: () => provider.removeChannel(ch.id)),
+        _DeleteButton(onTap: () => removeChannelWithUndo(context, ch.id)),
       ],
     );
   }

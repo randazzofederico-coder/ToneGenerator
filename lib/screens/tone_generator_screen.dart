@@ -179,6 +179,13 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
                               : null,
                         ),
                         IconButton(
+                          icon: const Icon(Icons.share_outlined, size: 22),
+                          tooltip: 'Compartir sesión',
+                          onPressed: provider.channels.isEmpty
+                              ? null
+                              : () => shareCurrentSession(context),
+                        ),
+                        IconButton(
                           icon: const Icon(Icons.library_music_outlined,
                               size: 22),
                           tooltip: 'Biblioteca',
@@ -203,12 +210,6 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
                               value: _MenuAction.library,
                               child: _MenuRow(Icons.library_music_outlined,
                                   'Biblioteca'),
-                            ),
-                            PopupMenuItem(
-                              value: _MenuAction.share,
-                              enabled: provider.channels.isNotEmpty,
-                              child: const _MenuRow(
-                                  Icons.share_outlined, 'Compartir sesión'),
                             ),
                             const PopupMenuDivider(),
                             const PopupMenuItem(
@@ -355,8 +356,6 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
         startNewSession(context);
       case _MenuAction.library:
         _openLibrary(context);
-      case _MenuAction.share:
-        shareCurrentSession(context);
       case _MenuAction.settings:
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -365,10 +364,10 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
   }
 }
 
-enum _MenuAction { saveAs, newSession, library, share, settings }
+enum _MenuAction { saveAs, newSession, library, settings }
 
 /// Session name in the app bar: italic with `*` when there are unsaved
-/// changes. Tapping it opens the library.
+/// changes. Tapping it renames the session (or saves it, if unsaved).
 class _SessionTitle extends StatelessWidget {
   final ToneGeneratorProvider provider;
   const _SessionTitle({required this.provider});
@@ -376,33 +375,52 @@ class _SessionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dirty = provider.isDirty;
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const LibraryScreen()),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'TONE GENERATOR',
-            style: TextStyle(
-              fontSize: 10,
-              letterSpacing: 2,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.45),
-            ),
+    final saved = provider.activeSessionId != null;
+    return Tooltip(
+      message: saved ? 'Renombrar sesión' : 'Guardar sesión',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => renameCurrentSession(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'TONE GENERATOR',
+                style: TextStyle(
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withOpacity(0.45),
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      dirty
+                          ? '${provider.displayName} *'
+                          : provider.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        fontStyle:
+                            dirty ? FontStyle.italic : FontStyle.normal,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.edit_outlined,
+                      size: 14, color: Colors.white.withOpacity(0.4)),
+                ],
+              ),
+            ],
           ),
-          Text(
-            dirty ? '${provider.displayName} *' : provider.displayName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              fontStyle: dirty ? FontStyle.italic : FontStyle.normal,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
