@@ -4,12 +4,152 @@ import 'package:provider/provider.dart';
 import '../providers/tone_generator_provider.dart';
 import '../providers/settings_provider.dart';
 import '../models/channel_model.dart';
+import '../providers/session_provider.dart';
+import '../services/deep_link_service.dart';
+import '../services/session_actions.dart';
+import '../services/share_import_service.dart';
+import '../theme/app_colors.dart';
 import '../widgets/channel_card.dart';
 import '../widgets/piano_keyboard.dart';
+import 'library_screen.dart';
 import 'settings_screen.dart';
 
-class ToneGeneratorScreen extends StatelessWidget {
+class ToneGeneratorScreen extends StatefulWidget {
   const ToneGeneratorScreen({super.key});
+
+  @override
+  State<ToneGeneratorScreen> createState() => _ToneGeneratorScreenState();
+}
+
+class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // This screen is only built after the safety disclaimer was accepted,
+    // so shared links are processed from here.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pendingId = DeepLinkService().consumePendingShareId();
+      if (pendingId != null) _handleShareId(pendingId);
+      // Links arriving while the app runs (App Links / PWA launchQueue).
+      DeepLinkService().listenIncomingLinks(_handleShareId);
+    });
+  }
+
+  bool _isHandlingShare = false;
+  final List<String> _queuedShares = [];
+
+  /// Receive flow: fetch → import to library → ask to open (protecting
+  /// unsaved work) → open (stopped). Links arriving mid-flow are queued.
+  Future<void> _handleShareId(String shareId) async {
+    if (!mounted) return;
+    if (_isHandlingShare) {
+      _queuedShares.add(shareId);
+      return;
+    }
+    _isHandlingShare = true;
+    try {
+      await _receiveShare(shareId);
+    } finally {
+      _isHandlingShare = false;
+    }
+    if (_queuedShares.isNotEmpty) {
+      await _handleShareId(_queuedShares.removeAt(0));
+    }
+  }
+
+  Future<void> _receiveShare(String shareId) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(
+      backgroundColor: AppColors.surfaceHigh,
+      duration: Duration(seconds: 20),
+      content: Row(children: [
+        SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+              strokeWidth: 2, color: AppColors.textPrimary),
+        ),
+        SizedBox(width: 12),
+        Text('Abriendo sesión compartida…'),
+      ]),
+    ));
+
+    final bundle = await DeepLinkService().fetchSharedBundle(shareId);
+    if (!mounted) return;
+    messenger.hideCurrentSnackBar();
+    if (bundle == null) {
+      showAppSnack(context, 'El link compartido no es válido o expiró.',
+          error: true);
+      return;
+    }
+
+    final ShareImportResult result;
+    try {
+      result = await ShareImportService(
+        sessions: context.read<SessionProvider>(),
+      ).import(bundle);
+    } catch (e) {
+      debugPrint('Share import error: $e');
+      if (mounted) {
+        showAppSnack(context, 'No se pudo importar la sesión compartida.',
+            error: true);
+      }
+      return;
+    }
+    if (!mounted) return;
+
+    final wantsOpen = await _askOpenImported(result);
+    if (wantsOpen != true || !mounted) return;
+
+    // Wait for the engine and the restored working state before replacing it.
+    await context.read<ToneGeneratorProvider>().ready;
+    if (!mounted) return;
+    final opened = await openSession(context, result.session);
+    if (opened && mounted) {
+      showAppSnack(context,
+          'Sesión «${result.session.name}» cargada. Revisá el volumen y dale Play.');
+    }
+  }
+
+  /// "Added to your library — open now?" dialog.
+  Future<bool?> _askOpenImported(ShareImportResult r) {
+    final status = r.alreadyInLibrary
+        ? 'Ya estaba en tu biblioteca.'
+        : 'Se agregó a tu biblioteca (${r.session.summaryLabel}).';
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        icon: const Icon(Icons.library_music_rounded,
+            color: AppColors.primary),
+        title: const Text('Sesión recibida'),
+        content: Text(
+          '«${r.session.name}»\n$status\n\n¿Querés abrirla ahora?',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('SOLO GUARDAR',
+                style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('ABRIR',
+                style: TextStyle(
+                    color: AppColors.primary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    DeepLinkService().dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,33 +168,55 @@ class ToneGeneratorScreen extends StatelessWidget {
                       snap: true,
                       backgroundColor: const Color(0xFF1A1A2E),
                       elevation: 0,
-                      title: const Text(
-                        'Tone Generator',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      title: _SessionTitle(provider: provider),
                       centerTitle: true,
                       actions: [
                         IconButton(
-                          icon: const Icon(Icons.share, size: 22),
-                          tooltip: 'Compartir Sesión',
-                          onPressed: provider.channels.isEmpty
-                              ? null
-                              : () => _shareSession(context, provider),
+                          icon: const Icon(Icons.save_outlined, size: 22),
+                          tooltip: 'Guardar sesión',
+                          onPressed: provider.isDirty
+                              ? () => saveCurrentSession(context)
+                              : null,
                         ),
                         IconButton(
-                          icon: const Icon(Icons.settings_outlined, size: 22),
-                          tooltip: 'Ajustes',
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const SettingsScreen(),
-                              ),
-                            );
-                          },
+                          icon: const Icon(Icons.library_music_outlined,
+                              size: 22),
+                          tooltip: 'Biblioteca',
+                          onPressed: () => _openLibrary(context),
+                        ),
+                        PopupMenuButton<_MenuAction>(
+                          tooltip: 'Más opciones',
+                          color: AppColors.surfaceHigh,
+                          onSelected: (a) => _onMenu(context, a),
+                          itemBuilder: (_) => [
+                            const PopupMenuItem(
+                              value: _MenuAction.saveAs,
+                              child: _MenuRow(
+                                  Icons.save_as_outlined, 'Guardar como…'),
+                            ),
+                            const PopupMenuItem(
+                              value: _MenuAction.newSession,
+                              child: _MenuRow(Icons.add_box_outlined,
+                                  'Nueva sesión'),
+                            ),
+                            const PopupMenuItem(
+                              value: _MenuAction.library,
+                              child: _MenuRow(Icons.library_music_outlined,
+                                  'Biblioteca'),
+                            ),
+                            PopupMenuItem(
+                              value: _MenuAction.share,
+                              enabled: provider.channels.isNotEmpty,
+                              child: const _MenuRow(
+                                  Icons.share_outlined, 'Compartir sesión'),
+                            ),
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              value: _MenuAction.settings,
+                              child: _MenuRow(
+                                  Icons.settings_outlined, 'Ajustes'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -179,10 +341,86 @@ class ToneGeneratorScreen extends StatelessWidget {
     );
   }
 
-  void _shareSession(BuildContext context, ToneGeneratorProvider provider) {
-    final json = provider.sessionToJson();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Compartir sesión (próximamente)')),
+  void _openLibrary(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const LibraryScreen()),
+    );
+  }
+
+  void _onMenu(BuildContext context, _MenuAction action) {
+    switch (action) {
+      case _MenuAction.saveAs:
+        saveCurrentSessionAs(context);
+      case _MenuAction.newSession:
+        startNewSession(context);
+      case _MenuAction.library:
+        _openLibrary(context);
+      case _MenuAction.share:
+        shareCurrentSession(context);
+      case _MenuAction.settings:
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        );
+    }
+  }
+}
+
+enum _MenuAction { saveAs, newSession, library, share, settings }
+
+/// Session name in the app bar: italic with `*` when there are unsaved
+/// changes. Tapping it opens the library.
+class _SessionTitle extends StatelessWidget {
+  final ToneGeneratorProvider provider;
+  const _SessionTitle({required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final dirty = provider.isDirty;
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const LibraryScreen()),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'TONE GENERATOR',
+            style: TextStyle(
+              fontSize: 10,
+              letterSpacing: 2,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withOpacity(0.45),
+            ),
+          ),
+          Text(
+            dirty ? '${provider.displayName} *' : provider.displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              fontStyle: dirty ? FontStyle.italic : FontStyle.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _MenuRow(this.icon, this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Text(label),
+      ],
     );
   }
 }

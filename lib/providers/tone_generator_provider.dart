@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/channel_model.dart';
+import '../models/tone_session.dart';
 import 'package:native_audio_engine/live_mixer.dart';
 
 /// Predefined channel colors
@@ -30,18 +33,47 @@ class ToneGeneratorProvider extends ChangeNotifier {
   bool _isReady = false;
   double _masterVolume = 0.8;
   String? _selectedChannelId;
-  
+
   // Throttle UI rebuilds during continuous slider drags
   DateTime _lastNotifyTime = DateTime.now();
   static const _notifyThrottle = Duration(milliseconds: 16); // ~60fps max
 
   static const _uuid = Uuid();
 
+  // --- Active session / dirty tracking ---
+  String? _activeSessionId;
+  String? _activeSessionName;
+
+  /// State key of the active session as last saved/opened.
+  String? _savedSnapshot;
+
+  // --- Working state persistence ---
+  static const _workingStateKey = 'tone_working_state';
+  Timer? _saveTimer;
+  final Completer<void> _restored = Completer<void>();
+
   List<ToneChannel> get channels => List.unmodifiable(_channels);
   bool get isPlaying => _isPlaying;
   bool get isReady => _isReady;
   double get masterVolume => _masterVolume;
   String? get selectedChannelId => _selectedChannelId;
+
+  /// Completes once the engine is ready and the last working state restored.
+  Future<void> get ready => _restored.future;
+
+  /// ID of the library session currently open (null = unsaved "Sin título").
+  String? get activeSessionId => _activeSessionId;
+  String? get activeSessionName => _activeSessionName;
+
+  /// Name shown in the UI.
+  String get displayName => _activeSessionName ?? 'Sin título';
+
+  /// True when the current state differs from the open session as saved.
+  /// For an unsaved session, true as soon as there is any channel.
+  bool get isDirty {
+    if (_activeSessionId == null) return _channels.isNotEmpty;
+    return _stateKey() != _savedSnapshot;
+  }
 
   /// Index of a channel by its id (used for color mapping)
   int channelIndex(String id) {
@@ -52,11 +84,16 @@ class ToneGeneratorProvider extends ChangeNotifier {
   }
 
   Future<void> init() async {
-    _mixer = LiveMixer();
-    await _mixer.init();
-    _isReady = true;
-    _mixer.setMasterVolume(_masterVolume);
-    notifyListeners();
+    try {
+      _mixer = LiveMixer();
+      await _mixer.init();
+      _isReady = true;
+      _mixer.setMasterVolume(_masterVolume);
+      await _restoreWorkingState();
+    } finally {
+      if (!_restored.isCompleted) _restored.complete();
+      notifyListeners();
+    }
   }
 
   // --- Selection ---
@@ -78,7 +115,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
       noteName: ToneChannel.frequencyToNoteName(freq),
     );
     _channels.add(channel);
-    
+
     if (_isReady) {
       _mixer.addOscillator(id, freq, waveform.index);
       _mixer.setOscillatorVolume(id, 0.3);
@@ -86,8 +123,8 @@ class ToneGeneratorProvider extends ChangeNotifier {
 
     // Auto-select the new channel
     _selectedChannelId = id;
-    
-    notifyListeners();
+
+    _changed();
     return id;
   }
 
@@ -100,7 +137,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (_selectedChannelId == id) {
       _selectedChannelId = _channels.isNotEmpty ? _channels.last.id : null;
     }
-    notifyListeners();
+    _changed();
   }
 
   void setFrequency(String id, double freq) {
@@ -109,7 +146,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     ch.frequency = freq;
     ch.noteName = ToneChannel.frequencyToNoteName(freq);
     if (_isReady) _mixer.setOscillatorFreq(id, freq);
-    _throttledNotify();
+    _changed(throttled: true);
   }
 
   void setNote(String id, String noteName, int octave) {
@@ -119,7 +156,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     ch.frequency = freq;
     ch.noteName = '$noteName$octave';
     if (_isReady) _mixer.setOscillatorFreq(id, freq);
-    notifyListeners();
+    _changed();
   }
 
   void setWaveform(String id, Waveform waveform) {
@@ -127,7 +164,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (ch == null) return;
     ch.waveform = waveform;
     if (_isReady) _mixer.setOscillatorWaveform(id, waveform.index);
-    notifyListeners();
+    _changed();
   }
 
   void setVolume(String id, double volume) {
@@ -135,7 +172,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (ch == null) return;
     ch.volume = volume;
     if (_isReady) _mixer.setOscillatorVolume(id, volume);
-    _throttledNotify();
+    _changed(throttled: true);
   }
 
   void setPan(String id, double pan) {
@@ -143,7 +180,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (ch == null) return;
     ch.pan = pan;
     if (_isReady) _mixer.setOscillatorPan(id, pan);
-    _throttledNotify();
+    _changed(throttled: true);
   }
 
   void toggleMute(String id) {
@@ -151,7 +188,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (ch == null) return;
     ch.muted = !ch.muted;
     if (_isReady) _mixer.setOscillatorMute(id, ch.muted);
-    notifyListeners();
+    _changed();
   }
 
   void toggleSolo(String id) {
@@ -159,7 +196,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (ch == null) return;
     ch.solo = !ch.solo;
     if (_isReady) _mixer.setOscillatorSolo(id, ch.solo);
-    notifyListeners();
+    _changed();
   }
 
   void togglePhaseInvert(String id) {
@@ -167,7 +204,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (ch == null) return;
     ch.phaseInvert = !ch.phaseInvert;
     if (_isReady) _mixer.setOscillatorPhaseInvert(id, ch.phaseInvert);
-    notifyListeners();
+    _changed();
   }
 
   // --- Master ---
@@ -175,7 +212,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
   void setMasterVolume(double vol) {
     _masterVolume = vol;
     if (_isReady) _mixer.setMasterVolume(vol);
-    _throttledNotify();
+    _changed(throttled: true);
   }
 
   // --- Playback ---
@@ -202,78 +239,77 @@ class ToneGeneratorProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- Serialization (for sharing) ---
+  // --- Sessions ---
 
-  String sessionToJson() {
-    final data = {
-      'channels': _channels.map((ch) => ch.toJson()).toList(),
-      'masterVol': _masterVolume,
-    };
-    return jsonEncode(data);
+  /// Captures the current state as a session. Without [id] it reuses the
+  /// active session's ID (or a new one if there is none).
+  ToneSession captureSession({String? id, String? name, DateTime? createdAt}) {
+    return ToneSession.capture(
+      id: id ?? _activeSessionId,
+      name: name ?? displayName,
+      channels: _channels,
+      masterVolume: _masterVolume,
+      createdAt: createdAt,
+    );
   }
 
-  String channelToJson(String id) {
-    final ch = _findChannel(id);
-    if (ch == null) return '{}';
-    return jsonEncode(ch.toJson());
+  /// Loads [session] replacing the current channels. Playback is always
+  /// stopped first: a session (own or received) never starts sounding alone.
+  void loadSession(ToneSession session) {
+    if (_isPlaying) stop();
+    _applyState(session.buildChannels(), session.masterVolume);
+    _activeSessionId = session.id;
+    _activeSessionName = session.name;
+    _savedSnapshot = _stateKey();
+    _changed();
   }
 
-  void loadSessionFromJson(String jsonStr) {
-    try {
-      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-      
-      // Clear existing
-      for (final ch in List.of(_channels)) {
-        removeChannel(ch.id);
-      }
-      
-      _masterVolume = (data['masterVol'] as num?)?.toDouble() ?? 0.8;
-      if (_isReady) _mixer.setMasterVolume(_masterVolume);
-      
-      final channelsJson = data['channels'] as List<dynamic>? ?? [];
-      for (final chJson in channelsJson) {
-        final id = _uuid.v4();
-        final ch = ToneChannel.fromJson(id, chJson as Map<String, dynamic>);
-        _channels.add(ch);
-        if (_isReady) {
-          _mixer.addOscillator(id, ch.frequency, ch.waveformIndex);
-          _mixer.setOscillatorVolume(id, ch.volume);
-          _mixer.setOscillatorPan(id, ch.pan);
-          _mixer.setOscillatorMute(id, ch.muted);
-          _mixer.setOscillatorSolo(id, ch.solo);
-          _mixer.setOscillatorPhaseInvert(id, ch.phaseInvert);
-        }
-      }
-      
-      if (_channels.isNotEmpty) {
-        _selectedChannelId = _channels.first.id;
-      }
-      
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error loading session: $e');
-    }
+  /// Starts a new, empty, unsaved session.
+  void newSession() {
+    if (_isPlaying) stop();
+    _applyState(const [], 0.8);
+    _activeSessionId = null;
+    _activeSessionName = null;
+    _savedSnapshot = null;
+    _changed();
   }
 
-  void loadChannelFromJson(String jsonStr) {
-    try {
-      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-      final id = _uuid.v4();
-      final ch = ToneChannel.fromJson(id, data);
-      _channels.add(ch);
-      if (_isReady) {
-        _mixer.addOscillator(id, ch.frequency, ch.waveformIndex);
-        _mixer.setOscillatorVolume(id, ch.volume);
-        _mixer.setOscillatorPan(id, ch.pan);
-        _mixer.setOscillatorMute(id, ch.muted);
-        _mixer.setOscillatorSolo(id, ch.solo);
-        _mixer.setOscillatorPhaseInvert(id, ch.phaseInvert);
-      }
-      _selectedChannelId = id;
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error loading channel: $e');
-    }
+  /// Marks the current state as saved under [session] (after saving it).
+  void markSaved(ToneSession session) {
+    _activeSessionId = session.id;
+    _activeSessionName = session.name;
+    _savedSnapshot = _stateKey();
+    _changed();
+  }
+
+  /// Sets the "saved" reference to [session] without touching the channels
+  /// (used to undo an overwrite: the working state becomes dirty again).
+  void setSavedReference(ToneSession session) {
+    _activeSessionId = session.id;
+    _activeSessionName = session.name;
+    _savedSnapshot = _stateKeyFor(session.channels, session.masterVolume);
+    _changed();
+  }
+
+  /// Updates the active session name (after a rename in the library).
+  void renameActive(String name) {
+    _activeSessionName = name;
+    _changed();
+  }
+
+  /// The active session was deleted from the library: keep working on the
+  /// same channels as an unsaved session (name and snapshot are kept so an
+  /// undo can re-attach it).
+  void detachActive() {
+    _activeSessionId = null;
+    _changed();
+  }
+
+  /// Re-attaches a session restored by undo, if nothing else was opened.
+  void reattach(ToneSession session) {
+    if (_activeSessionId != null || _activeSessionName != session.name) return;
+    _activeSessionId = session.id;
+    _changed();
   }
 
   // --- Internal ---
@@ -285,8 +321,47 @@ class ToneGeneratorProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Throttled notify — sends engine updates immediately but limits UI rebuilds
-  void _throttledNotify() {
+  /// Replaces all channels in the engine and in memory (no notification).
+  void _applyState(List<ToneChannel> channels, double masterVolume) {
+    if (_isReady) {
+      for (final ch in _channels) {
+        _mixer.removeOscillator(ch.id);
+      }
+    }
+    _channels
+      ..clear()
+      ..addAll(channels);
+
+    _masterVolume = masterVolume;
+    if (_isReady) {
+      _mixer.setMasterVolume(_masterVolume);
+      for (final ch in _channels) {
+        _mixer.addOscillator(ch.id, ch.frequency, ch.waveformIndex);
+        _mixer.setOscillatorVolume(ch.id, ch.volume);
+        _mixer.setOscillatorPan(ch.id, ch.pan);
+        _mixer.setOscillatorMute(ch.id, ch.muted);
+        _mixer.setOscillatorSolo(ch.id, ch.solo);
+        _mixer.setOscillatorPhaseInvert(ch.id, ch.phaseInvert);
+      }
+    }
+    _selectedChannelId = _channels.isNotEmpty ? _channels.first.id : null;
+  }
+
+  String _stateKeyFor(List<Map<String, dynamic>> channels, double master) =>
+      jsonEncode({'c': channels, 'm': master});
+
+  String _stateKey() =>
+      _stateKeyFor(_channels.map((c) => c.toJson()).toList(), _masterVolume);
+
+  /// Notifies listeners (optionally throttled) and schedules a save of the
+  /// working state.
+  void _changed({bool throttled = false}) {
+    _scheduleSave();
+    if (!throttled) {
+      notifyListeners();
+      return;
+    }
+    // Throttled notify — engine updates are immediate, UI rebuilds limited
     final now = DateTime.now();
     if (now.difference(_lastNotifyTime) >= _notifyThrottle) {
       _lastNotifyTime = now;
@@ -294,8 +369,54 @@ class ToneGeneratorProvider extends ChangeNotifier {
     }
   }
 
+  void _scheduleSave() {
+    if (!_restored.isCompleted) return; // don't overwrite before restoring
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(milliseconds: 500), _saveWorkingState);
+  }
+
+  Future<void> _saveWorkingState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _workingStateKey,
+        jsonEncode({
+          'channels': _channels.map((c) => c.toJson()).toList(),
+          'masterVol': _masterVolume,
+          'activeId': _activeSessionId,
+          'activeName': _activeSessionName,
+          'snapshot': _savedSnapshot,
+        }),
+      );
+    } catch (e) {
+      debugPrint('Error saving working state: $e');
+    }
+  }
+
+  Future<void> _restoreWorkingState() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_workingStateKey);
+      if (raw == null) return;
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      // Reuse the defensive session parser for channels and volume.
+      final session = ToneSession.fromJson({
+        'name': data['activeName'],
+        'channels': data['channels'],
+        'masterVol': data['masterVol'],
+      });
+      _applyState(session.buildChannels(), session.masterVolume);
+      _activeSessionId = data['activeId'] as String?;
+      _activeSessionName = data['activeName'] as String?;
+      _savedSnapshot = data['snapshot'] as String?;
+    } catch (e) {
+      debugPrint('Error restoring working state: $e');
+    }
+  }
+
   @override
   void dispose() {
+    _saveTimer?.cancel();
     if (_isReady) {
       _mixer.stopPlayback();
       _mixer.dispose();

@@ -99,17 +99,37 @@ class ToneChannel {
     'n': noteName,
   };
 
+  static const double minFrequency = 1.0;
+  static const double maxFrequency = 20154.0;
+
+  /// Builds a channel from JSON. Tolerant and defensive: the data may come
+  /// from a shared link, so values are type-checked and clamped to safe ranges.
   factory ToneChannel.fromJson(String id, Map<String, dynamic> json) {
+    double num_(Object? v, double fallback, double min, double max) {
+      final d = (v is num) ? v.toDouble() : fallback;
+      if (d.isNaN || d.isInfinite) return fallback;
+      return d.clamp(min, max).toDouble();
+    }
+
+    final w = json['w'];
+    final wIndex = (w is num) ? w.toInt() : 0;
+    final frequency = num_(json['f'], 440.0, minFrequency, maxFrequency);
+    final n = json['n'];
+
     return ToneChannel(
       id: id,
-      frequency: (json['f'] as num?)?.toDouble() ?? 440.0,
-      waveform: Waveform.values[(json['w'] as int?) ?? 0],
-      volume: (json['v'] as num?)?.toDouble() ?? 0.5,
-      pan: (json['p'] as num?)?.toDouble() ?? 0.0,
-      muted: json['m'] as bool? ?? false,
-      solo: json['s'] as bool? ?? false,
-      phaseInvert: json['i'] as bool? ?? false,
-      noteName: json['n'] as String?,
+      frequency: frequency,
+      waveform: (wIndex >= 0 && wIndex < Waveform.values.length)
+          ? Waveform.values[wIndex]
+          : Waveform.sine,
+      volume: num_(json['v'], 0.5, 0.0, 1.0),
+      pan: num_(json['p'], 0.0, -1.0, 1.0),
+      muted: json['m'] == true,
+      solo: json['s'] == true,
+      phaseInvert: json['i'] == true,
+      noteName: (n is String && n.length <= 8)
+          ? n
+          : frequencyToNoteName(frequency),
     );
   }
 
