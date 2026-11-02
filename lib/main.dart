@@ -7,7 +7,6 @@ import 'l10n/l10n.dart';
 import 'providers/tone_generator_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/settings_provider.dart';
-import 'auth/auth_repository.dart';
 import 'screens/tone_generator_screen.dart';
 import 'services/deep_link_service.dart';
 import 'widgets/disclaimer_gate.dart';
@@ -17,7 +16,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await AuthRepository.instance.init();
   // Capture the shared link (?share=) BEFORE runApp: it is processed once the
   // main screen is shown (after the safety disclaimer).
   await DeepLinkService().captureInitialLink();

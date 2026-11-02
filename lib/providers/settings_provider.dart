@@ -38,7 +38,22 @@ class SettingsProvider extends ChangeNotifier {
     _scaleFactor = prefs.getDouble(_keyScaleFactor) ?? 1.0;
     _languageCode = prefs.getString(_keyLanguage);
     notifyListeners();
+    // One-time cleanup: permission cache left by the removed legacy login.
+    for (final key in _legacyPermKeys) {
+      if (prefs.containsKey(key)) await prefs.remove(key);
+    }
   }
+
+  static const _legacyPermKeys = [
+    'perm_has_access',
+    'perm_has_profile',
+    'perm_rol',
+    'perm_trial_active',
+    'perm_trial_days_left',
+    'perm_trial_expired',
+    'perm_trial_used',
+    'perm_last_verified',
+  ];
 
   Future<void> acceptDisclaimer() async {
     _disclaimerAccepted = true;

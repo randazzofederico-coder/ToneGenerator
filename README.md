@@ -39,7 +39,6 @@ Aplicación profesional para generar tonos de prueba, calibrar equipos de audio,
 - **Idioma** arriba de todo: idioma del sistema (por defecto), Español o English
 - **Tamaño de interfaz** configurable (70% – 130%)
 - **Comunidad**: acceso al foro (https://federicorandazzo.com.ar/foro/)
-- Información de sesión y verificación
 - Advertencia de seguridad auditiva
 
 ### 🌐 Idiomas
@@ -47,10 +46,9 @@ Aplicación profesional para generar tonos de prueba, calibrar equipos de audio,
 - Por defecto sigue el idioma del sistema (cualquier `es_*` → español; el resto → inglés). Se puede forzar en Ajustes o desde la advertencia de seguridad inicial; se guarda en `SharedPreferences` (`settings_language`)
 - En widgets: `context.l10n.clave`. Fuera de widgets (modelos, providers, servicios): `L10n.current.clave`, sincronizado desde el `builder` del `MaterialApp`
 - `test/l10n_test.dart` verifica que ambos idiomas tengan las mismas claves y placeholders
-- Las pantallas de `lib/auth/` (no en uso) siguen sin traducir
 
 ### 🔐 Autenticación
-- **App libre (estado actual)** — `main.dart` abre directo `DisclaimerGate(child: ToneGeneratorScreen())`. El `AuthGate` (Google Sign-In, email/contraseña, permisos vía Firestore, cache offline de 30 días, trial) se conserva en `lib/auth/` para reactivarlo en el futuro
+- **App libre** — `main.dart` abre directo `DisclaimerGate(child: ToneGeneratorScreen())`. El login heredado (`AuthGate`: Google Sign-In, email/contraseña, permisos vía Firestore, cache offline, trial) fue eliminado; queda en el historial de git. Al iniciar, `SettingsProvider` borra las claves `perm_*` que pudiera haber dejado en `SharedPreferences`
 - El único uso de Auth hoy es el **login anónimo** al compartir sesiones
 
 ### 📚 Biblioteca de sesiones
@@ -150,15 +148,9 @@ lib/
 │   ├── app_es.arb / app_en.arb        # Textos (español = plantilla)
 │   ├── app_localizations*.dart        # Generado por gen-l10n
 │   └── l10n.dart                      # context.l10n, L10n.current, resolveAppLocale
-├── auth/
-│   ├── auth_gate.dart                 # Auth flow + permission checker
-│   ├── auth_repository.dart           # Permission cache (SharedPreferences)
-│   ├── login_screen.dart              # Login/registro
-│   └── onboarding_screen.dart         # Creación de perfil
 ├── models/
 │   ├── channel_model.dart             # ToneChannel, Waveform, channelColor()
-│   ├── tone_session.dart              # ToneSession (sesión guardada/compartida)
-│   └── permission_cache.dart          # Cache de permisos offline
+│   └── tone_session.dart              # ToneSession (sesión guardada/compartida)
 ├── providers/
 │   ├── tone_generator_provider.dart   # Canales, playback, mixer, sesión activa, estado de trabajo
 │   ├── session_provider.dart          # Biblioteca de sesiones (SharedPreferences)
@@ -216,10 +208,6 @@ El factor se persiste en SharedPreferences y se aplica reactivamente via `Consum
 
 | Colección | Campo | Uso |
 |---|---|---|
-| `usuarios/{uid}` | `suscripciones_apps.tone_generator` | Acceso habilitado |
-| `usuarios/{uid}` | `trial_tone_generator_inicio` | Inicio del trial |
-| `usuarios/{uid}` | `rol` | Rol del usuario |
-| `consultas_web` | (documentos) | Notificaciones al admin |
 | `tone_shared_links/{id}` | ver *Compartir sesiones* | Links compartidos |
 
 ## Requisitos
