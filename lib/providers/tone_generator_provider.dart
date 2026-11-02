@@ -251,7 +251,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     _mixer.startPlayback();
     _isPlaying = true;
     // Usage metrics: tones sounding = main activity.
-    UsageTracker.instance.startActivity();
+    UsageTracker.instance.startActivity(continuesInBackground: true);
     notifyListeners();
   }
 
