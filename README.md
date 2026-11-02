@@ -2,6 +2,10 @@
 
 Generador de frecuencias multi-canal con síntesis de ondas en tiempo real.
 
+- **Repositorio:** https://github.com/randazzofederico-coder/ToneGenerator
+- **Web:** https://federicorandazzo.com.ar/tone-generator/
+- **Android:** `com.saroo.tone_generator` (Google Play)
+
 Aplicación profesional para generar tonos de prueba, calibrar equipos de audio, y explorar frecuencias. Soporta múltiples canales simultáneos con control independiente de frecuencia, volumen, paneo y forma de onda.
 
 ## Características
@@ -235,6 +239,27 @@ flutter build web --wasm --base-href /tone-generator/
 ```
 
 App Links: `mi-web-fede/public/.well-known/assetlinks.json` incluye `com.saroo.tone_generator` con el SHA-256 de la clave de firma de Play.
+
+## Notas de mantenimiento
+
+- **Origen del repo** — El proyecto nació como copia del Afinador. En noviembre 2026 se reinició el historial en este repo propio (commit inicial limpio); el `.git` anterior quedó respaldado localmente en `c:\dev\_backups\ToneGenerator-git-afinador`
+- **Motor de audio** (`packages/native_audio_engine`) — Código compartido con Metrónomo/Afinador. No aplicar "arreglos automáticos" de warnings ahí sin revisar: quitar los valores por defecto de `_WebChannel` (`muted`, `solo`, `phaseInvert`) en `live_mixer_web.dart` rompe el build web
+- **Problemas conocidos (no afectan la app)**
+  - `packages/native_audio_engine/example` no encuentra `SoundTouchProcessor` (el ejemplo no se compila con la app)
+  - `test/widget_test.dart` es la plantilla de Flutter (contador) y falla; los tests válidos son `sharing_test.dart` y `session_ui_test.dart`
+- **Fin de línea** — `core.autocrlf=true`: los avisos *LF will be replaced by CRLF* de git son normales
+- **Tests de widgets** — Crear `SessionProvider` dentro del cuerpo de cada `testWidgets` (no en `setUp`): su `Completer` creado fuera del *fake async* nunca resuelve
+- **Antes de commitear** — `flutter analyze lib` sin errores y `flutter test test/sharing_test.dart test/session_ui_test.dart` en verde
+
+## Historial de cambios
+
+| Fecha | Cambio |
+|---|---|
+| 2026-11-01 | Repo propio, commit inicial limpio |
+| 2026-11-01 | Biblioteca de sesiones, estado de trabajo persistente y compartir sesiones por link (`tone_shared_links`, login anónimo, importación idempotente) |
+| 2026-11-01 | App Links Android, PWA (`launch_handler`, `launchQueue`) y meta tags para previews |
+| 2026-11-01 | Renombrar tocando el nombre, compartir junto a guardar, DESHACER al borrar canal, snackbars que se ocultan solos |
+| 2026-11-01 | Limpieza de warnings (`withValues`, imports sin uso, formato) |
 
 ## Seguridad Auditiva
 
