@@ -104,14 +104,14 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.library_music_outlined,
-                size: 56, color: Colors.white.withOpacity(0.15)),
+                size: 56, color: Colors.white.withValues(alpha: 0.15)),
             const SizedBox(height: 16),
             Text(
               searching
                   ? 'No hay sesiones con ese nombre'
                   : 'Todavía no guardaste sesiones.\nUsá 💾 en la pantalla principal para guardar la actual.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withOpacity(0.45)),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.45)),
             ),
           ],
         ),
@@ -144,7 +144,7 @@ class _SessionTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isActive
-                    ? AppColors.primary.withOpacity(0.6)
+                    ? AppColors.primary.withValues(alpha: 0.6)
                     : AppColors.border,
               ),
             ),
@@ -180,7 +180,7 @@ class _SessionTile extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.18),
+                      color: AppColors.primary.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text('Abierta',
@@ -325,7 +325,7 @@ class _ChannelDots extends StatelessWidget {
       height: 28,
       child: n == 0
           ? Icon(Icons.graphic_eq,
-              size: 22, color: Colors.white.withOpacity(0.3))
+              size: 22, color: Colors.white.withValues(alpha: 0.3))
           : Wrap(
               spacing: 3,
               runSpacing: 3,

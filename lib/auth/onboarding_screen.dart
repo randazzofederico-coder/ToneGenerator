@@ -79,10 +79,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A2E),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.06)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 30,
                     offset: const Offset(0, 12),
                   ),
@@ -104,8 +104,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF6C63FF).withOpacity(0.15),
-                            const Color(0xFF00D2FF).withOpacity(0.15),
+                            const Color(0xFF6C63FF).withValues(alpha: 0.15),
+                            const Color(0xFF00D2FF).withValues(alpha: 0.15),
                           ],
                         ),
                         shape: BoxShape.circle,
@@ -135,7 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       "Tu perfil fue creado. El administrador revisará tu acceso.",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 14,
                         height: 1.5,
                       ),

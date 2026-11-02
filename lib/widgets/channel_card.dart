@@ -49,14 +49,14 @@ class ChannelCard extends StatelessWidget {
           color: const Color(0xFF141425),
           border: Border.all(
             color: isSelected
-                ? color.withOpacity(0.5)
-                : Colors.white.withOpacity(0.06),
+                ? color.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.06),
             width: isSelected ? 1.5 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     blurRadius: 16,
                     spreadRadius: -2,
                   ),
@@ -76,7 +76,7 @@ class ChannelCard extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [color, color.withOpacity(0.3)],
+                      colors: [color, color.withValues(alpha: 0.3)],
                     ),
                   ),
                 ),
@@ -288,8 +288,8 @@ class _FrequencySlider extends StatelessWidget {
     return SliderTheme(
       data: SliderThemeData(
         trackHeight: 3,
-        activeTrackColor: color.withOpacity(0.6),
-        inactiveTrackColor: Colors.white.withOpacity(0.05),
+        activeTrackColor: color.withValues(alpha: 0.6),
+        inactiveTrackColor: Colors.white.withValues(alpha: 0.05),
         thumbColor: Colors.white,
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
         overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
@@ -325,7 +325,7 @@ class _Badge extends StatelessWidget {
       height: 22,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color.withOpacity(muted ? 0.3 : 1.0),
+        color: color.withValues(alpha: muted ? 0.3 : 1.0),
       ),
       child: Center(
         child: Text(
@@ -355,7 +355,7 @@ class _NoteLabel extends StatelessWidget {
       child: Text(
         note,
         style: TextStyle(
-          color: muted ? Colors.white24 : Colors.white.withOpacity(0.85),
+          color: muted ? Colors.white24 : Colors.white.withValues(alpha: 0.85),
           fontSize: 13,
           fontWeight: FontWeight.w700,
         ),
@@ -405,8 +405,8 @@ class _FrequencyDisplayState extends State<_FrequencyDisplay> {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(5),
-          color: Colors.white.withOpacity(0.03),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          color: Colors.white.withValues(alpha: 0.03),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
         ),
         child: Row(
           children: [
@@ -429,13 +429,13 @@ class _FrequencyDisplayState extends State<_FrequencyDisplay> {
               'Hz',
               style: TextStyle(
                 fontSize: 8,
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withValues(alpha: 0.25),
               ),
             ),
             Icon(
               Icons.swap_vert,
               size: 8,
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
             ),
           ],
         ),
@@ -470,11 +470,11 @@ class _FrequencyDisplayState extends State<_FrequencyDisplay> {
           style: const TextStyle(color: Colors.white, fontSize: 18),
           decoration: InputDecoration(
             hintText: '1 − 20154',
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
             suffixText: 'Hz',
-            suffixStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+            suffixStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: color.withOpacity(0.3)),
+              borderSide: BorderSide(color: color.withValues(alpha: 0.3)),
             ),
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(color: color),
@@ -490,7 +490,7 @@ class _FrequencyDisplayState extends State<_FrequencyDisplay> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'Cancelar',
-              style: TextStyle(color: Colors.white.withOpacity(0.5)),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
             ),
           ),
           TextButton(
@@ -540,7 +540,7 @@ class _WaveformDropdown extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(5),
-          color: Colors.white.withOpacity(0.04),
+          color: Colors.white.withValues(alpha: 0.04),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -606,10 +606,10 @@ class _ToggleChip extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4),
           color: active
-              ? activeColor.withOpacity(0.2)
-              : Colors.white.withOpacity(0.03),
+              ? activeColor.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.03),
           border: Border.all(
-            color: active ? activeColor.withOpacity(0.5) : Colors.transparent,
+            color: active ? activeColor.withValues(alpha: 0.5) : Colors.transparent,
           ),
         ),
         child: Center(
@@ -645,7 +645,7 @@ class _OctaveButton extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: Colors.white.withOpacity(0.35),
+            color: Colors.white.withValues(alpha: 0.35),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -669,7 +669,7 @@ class _DeleteButton extends StatelessWidget {
         child: Icon(
           Icons.close,
           size: 14,
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
         ),
       ),
     );

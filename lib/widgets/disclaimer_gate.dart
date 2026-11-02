@@ -31,7 +31,7 @@ class DisclaimerGate extends StatelessWidget {
                 height: 64,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFE94560).withOpacity(0.15),
+                  color: const Color(0xFFE94560).withValues(alpha: 0.15),
                 ),
                 child: const Icon(
                   Icons.warning_amber_rounded,
@@ -55,7 +55,7 @@ class DisclaimerGate extends StatelessWidget {
               Text(
                 'Safety Warning',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.35),
+                  color: Colors.white.withValues(alpha: 0.35),
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   fontStyle: FontStyle.italic,
@@ -68,9 +68,9 @@ class DisclaimerGate extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: Colors.white.withOpacity(0.04),
+                  color: Colors.white.withValues(alpha: 0.04),
                   border: Border.all(
-                    color: const Color(0xFFE94560).withOpacity(0.15),
+                    color: const Color(0xFFE94560).withValues(alpha: 0.15),
                   ),
                 ),
                 child: Column(
@@ -102,7 +102,7 @@ class DisclaimerGate extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: Colors.white.withOpacity(0.02),
+                  color: Colors.white.withValues(alpha: 0.02),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +111,7 @@ class DisclaimerGate extends StatelessWidget {
                       'You can damage your hearing or your speakers if you play tones at extreme volumes.',
                       bold: true,
                       small: true,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 12),
                     _paragraph(
@@ -119,7 +119,7 @@ class DisclaimerGate extends StatelessWidget {
                       'the volume on your device to compensate, you could expose yourself to harmful '
                       'sound levels and your speakers to harmful currents.',
                       small: true,
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                     ),
                     const SizedBox(height: 12),
                     _paragraph(
@@ -128,7 +128,7 @@ class DisclaimerGate extends StatelessWidget {
                       'you can\'t hear much — especially in the high range, where your hearing is '
                       'the most fragile.',
                       small: true,
-                      color: Colors.white.withOpacity(0.4),
+                      color: Colors.white.withValues(alpha: 0.4),
                     ),
                   ],
                 ),
@@ -176,7 +176,7 @@ class DisclaimerGate extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-        color: color ?? Colors.white.withOpacity(0.7),
+        color: color ?? Colors.white.withValues(alpha: 0.7),
         fontSize: small ? 12 : 14,
         fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
         height: 1.5,

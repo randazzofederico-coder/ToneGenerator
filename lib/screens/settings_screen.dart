@@ -31,7 +31,7 @@ class SettingsScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: const Color(0xFF1A1A2E),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.text_fields,
-                            size: 18, color: Colors.white.withOpacity(0.4)),
+                            size: 18, color: Colors.white.withValues(alpha: 0.4)),
                         const SizedBox(width: 8),
                         const Text(
                           'Tamaño de interfaz',
@@ -56,7 +56,7 @@ class SettingsScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(6),
                             color:
-                                const Color(0xFF6C63FF).withOpacity(0.15),
+                                const Color(0xFF6C63FF).withValues(alpha: 0.15),
                           ),
                           child: Text(
                             '${(settings.scaleFactor * 100).round()}%',
@@ -74,7 +74,7 @@ class SettingsScreen extends StatelessWidget {
                       data: SliderThemeData(
                         trackHeight: 4,
                         activeTrackColor: const Color(0xFF6C63FF),
-                        inactiveTrackColor: Colors.white.withOpacity(0.06),
+                        inactiveTrackColor: Colors.white.withValues(alpha: 0.06),
                         thumbColor: Colors.white,
                         thumbShape: const RoundSliderThumbShape(
                             enabledThumbRadius: 7),
@@ -97,15 +97,15 @@ class SettingsScreen extends StatelessWidget {
                           Text('Compacto',
                               style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.white.withOpacity(0.25))),
+                                  color: Colors.white.withValues(alpha: 0.25))),
                           Text('Normal',
                               style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.white.withOpacity(0.25))),
+                                  color: Colors.white.withValues(alpha: 0.25))),
                           Text('Grande',
                               style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.white.withOpacity(0.25))),
+                                  color: Colors.white.withValues(alpha: 0.25))),
                         ],
                       ),
                     ),
@@ -123,7 +123,7 @@ class SettingsScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: const Color(0xFF1A1A2E),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,7 +141,7 @@ class SettingsScreen extends StatelessWidget {
                       'Generador de frecuencias multi-canal\n'
                       'con síntesis de ondas en tiempo real.',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -150,12 +150,12 @@ class SettingsScreen extends StatelessWidget {
                     Text(
                       'v1.0.0',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.25),
+                        color: Colors.white.withValues(alpha: 0.25),
                         fontSize: 11,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Divider(color: Colors.white.withOpacity(0.06)),
+                    Divider(color: Colors.white.withValues(alpha: 0.06)),
                     const SizedBox(height: 12),
                     InkWell(
                       onTap: () async {
@@ -198,7 +198,7 @@ class SettingsScreen extends StatelessWidget {
                   icon: const Icon(Icons.warning_amber_rounded, size: 18),
                   label: const Text('Ver advertencia de seguridad'),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.white.withOpacity(0.4),
+                    foregroundColor: Colors.white.withValues(alpha: 0.4),
                   ),
                 ),
               ),
@@ -235,7 +235,7 @@ class SettingsScreen extends StatelessWidget {
           'Encontrá un nivel cómodo a 1.000 Hz y no lo superes demasiado, '
           'especialmente en frecuencias agudas.',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
             fontSize: 13,
             height: 1.5,
           ),
@@ -262,7 +262,7 @@ class _SectionHeader extends StatelessWidget {
     return Text(
       title,
       style: TextStyle(
-        color: Colors.white.withOpacity(0.4),
+        color: Colors.white.withValues(alpha: 0.4),
         fontSize: 12,
         fontWeight: FontWeight.w600,
         letterSpacing: 1,

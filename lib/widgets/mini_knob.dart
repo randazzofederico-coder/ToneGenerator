@@ -50,8 +50,10 @@ class _MiniKnobState extends State<MiniKnob> {
       onVerticalDragUpdate: (details) {
         final delta = _dragStartY - details.globalPosition.dy;
         final range = widget.max - widget.min;
-        final newValue = (_dragStartValue + delta / 180.0 * range)
-            .clamp(widget.min, widget.max);
+        final newValue = (_dragStartValue + delta / 180.0 * range).clamp(
+          widget.min,
+          widget.max,
+        );
         widget.onChanged(newValue);
       },
       child: SizedBox(
@@ -63,7 +65,7 @@ class _MiniKnobState extends State<MiniKnob> {
               widget.label,
               style: TextStyle(
                 fontSize: 8,
-                color: Colors.white.withOpacity(0.35),
+                color: Colors.white.withValues(alpha: 0.35),
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
               ),
@@ -82,7 +84,7 @@ class _MiniKnobState extends State<MiniKnob> {
               widget.displayValue(widget.value),
               style: TextStyle(
                 fontSize: 8,
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -106,7 +108,7 @@ class _KnobPainter extends CustomPainter {
 
     // Background track arc
     final trackPaint = Paint()
-      ..color = Colors.white.withOpacity(0.08)
+      ..color = Colors.white.withValues(alpha: 0.08)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
@@ -145,13 +147,16 @@ class _KnobPainter extends CustomPainter {
       center.dy + radius * math.sin(indicatorAngle),
     );
     final glowPaint = Paint()
-      ..color = color.withOpacity(0.3)
+      ..color = color.withValues(alpha: 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
     canvas.drawCircle(glowCenter, 3, glowPaint);
 
     // Center dot
     canvas.drawCircle(
-        center, 1.5, Paint()..color = Colors.white.withOpacity(0.4));
+      center,
+      1.5,
+      Paint()..color = Colors.white.withValues(alpha: 0.4),
+    );
 
     // Indicator line
     final lineEnd = Offset(
@@ -167,7 +172,7 @@ class _KnobPainter extends CustomPainter {
       lineStart,
       lineEnd,
       Paint()
-        ..color = Colors.white.withOpacity(0.85)
+        ..color = Colors.white.withValues(alpha: 0.85)
         ..strokeWidth = 1.5
         ..strokeCap = StrokeCap.round,
     );

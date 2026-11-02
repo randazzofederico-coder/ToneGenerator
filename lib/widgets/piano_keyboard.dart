@@ -289,7 +289,7 @@ class _OctaveGroup extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: hasChannel
                           ? [
-                              channelColor(channelIndices!.first).withOpacity(0.3),
+                              channelColor(channelIndices.first).withOpacity(0.3),
                               const Color(0xFFD0D0D0),
                             ]
                           : [const Color(0xFFE8E8E8), const Color(0xFFD0D0D0)],
@@ -313,7 +313,7 @@ class _OctaveGroup extends StatelessWidget {
                             spacing: 2,
                             runSpacing: 2,
                             alignment: WrapAlignment.center,
-                            children: channelIndices!.map((idx) {
+                            children: channelIndices.map((idx) {
                               return Container(
                                 width: 7,
                                 height: 7,
@@ -376,7 +376,7 @@ class _OctaveGroup extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: hasChannel
                           ? [
-                              channelColor(channelIndices!.first).withOpacity(0.6),
+                              channelColor(channelIndices.first).withOpacity(0.6),
                               const Color(0xFF1A1A1A),
                             ]
                           : [const Color(0xFF2A2A2A), const Color(0xFF1A1A1A)],
@@ -398,7 +398,7 @@ class _OctaveGroup extends StatelessWidget {
                           child: Wrap(
                             spacing: 2,
                             alignment: WrapAlignment.center,
-                            children: channelIndices!.map((idx) {
+                            children: channelIndices.map((idx) {
                               return Container(
                                 width: 6,
                                 height: 6,

@@ -66,14 +66,20 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  void _showError(String msg) =>
-      setState(() { _errorMessage = msg; _successMessage = null; });
+  void _showError(String msg) => setState(() {
+    _errorMessage = msg;
+    _successMessage = null;
+  });
 
-  void _showSuccess(String msg) =>
-      setState(() { _successMessage = msg; _errorMessage = null; });
+  void _showSuccess(String msg) => setState(() {
+    _successMessage = msg;
+    _errorMessage = null;
+  });
 
-  void _clearMessages() =>
-      setState(() { _errorMessage = null; _successMessage = null; });
+  void _clearMessages() => setState(() {
+    _errorMessage = null;
+    _successMessage = null;
+  });
 
   Future<void> _signInWithGoogle() async {
     _clearMessages();
@@ -97,9 +103,17 @@ class _LoginScreenState extends State<LoginScreen>
         await FirebaseAuth.instance.signInWithCredential(credential);
       }
     } on FirebaseAuthException catch (e) {
-      _showError(_isNetworkError(e) ? _noInternetMsg : "Error al conectar con Google: ${e.message}");
+      _showError(
+        _isNetworkError(e)
+            ? _noInternetMsg
+            : "Error al conectar con Google: ${e.message}",
+      );
     } catch (e) {
-      _showError(_isNetworkError(e) ? _noInternetMsg : "Error al conectar con Google: $e");
+      _showError(
+        _isNetworkError(e)
+            ? _noInternetMsg
+            : "Error al conectar con Google: $e",
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -128,8 +142,10 @@ class _LoginScreenState extends State<LoginScreen>
       }
 
       try {
-        final cred = await FirebaseAuth.instance
-            .createUserWithEmailAndPassword(email: email, password: password);
+        final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
         await cred.user?.sendEmailVerification();
         _showSuccess(
           "Cuenta creada exitosamente. Revisá tu casilla de correo (incluyendo spam) para verificar tu email.",
@@ -147,7 +163,9 @@ class _LoginScreenState extends State<LoginScreen>
           _showError("Error: ${e.message}");
         }
       } catch (e) {
-        _showError(_isNetworkError(e) ? _noInternetMsg : "Error al registrar: $e");
+        _showError(
+          _isNetworkError(e) ? _noInternetMsg : "Error al registrar: $e",
+        );
       }
     } else {
       try {
@@ -166,7 +184,9 @@ class _LoginScreenState extends State<LoginScreen>
           _showError("Error al iniciar sesión: ${e.message}");
         }
       } catch (e) {
-        _showError(_isNetworkError(e) ? _noInternetMsg : "Error al iniciar sesión: $e");
+        _showError(
+          _isNetworkError(e) ? _noInternetMsg : "Error al iniciar sesión: $e",
+        );
       }
     }
 
@@ -181,7 +201,9 @@ class _LoginScreenState extends State<LoginScreen>
     }
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      _showSuccess("Email de recuperación enviado. Revisá tu bandeja de entrada y spam.");
+      _showSuccess(
+        "Email de recuperación enviado. Revisá tu bandeja de entrada y spam.",
+      );
     } on FirebaseAuthException catch (e) {
       _showError("Error al enviar el email: ${e.message}");
     }
@@ -211,10 +233,12 @@ class _LoginScreenState extends State<LoginScreen>
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1A2E),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       blurRadius: 40,
                       offset: const Offset(0, 16),
                     ),
@@ -239,7 +263,7 @@ class _LoginScreenState extends State<LoginScreen>
                           : "Iniciá sesión para usar el Tone Generator.",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -255,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen>
                           'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
                           width: 20,
                           height: 20,
-                          errorBuilder: (_, __, ___) =>
+                          errorBuilder: (_, _, _) =>
                               const Icon(Icons.g_mobiledata, size: 24),
                         ),
                         label: const Text(
@@ -280,18 +304,28 @@ class _LoginScreenState extends State<LoginScreen>
                     // Separator
                     Row(
                       children: [
-                        Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
+                        Expanded(
+                          child: Divider(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
-                            _isRegisterMode ? "O usá tu email" : "¿Tenés otro mail?",
+                            _isRegisterMode
+                                ? "O usá tu email"
+                                : "¿Tenés otro mail?",
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.35),
+                              color: Colors.white.withValues(alpha: 0.35),
                             ),
                           ),
                         ),
-                        Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
+                        Expanded(
+                          child: Divider(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -328,7 +362,8 @@ class _LoginScreenState extends State<LoginScreen>
                                       if (_isRegisterMode) ...[
                                         const SizedBox(height: 16),
                                         _buildField(
-                                          controller: _confirmPasswordController,
+                                          controller:
+                                              _confirmPasswordController,
                                           label: "CONFIRMAR CONTRASEÑA",
                                           hint: "••••••••",
                                           isPassword: true,
@@ -339,12 +374,17 @@ class _LoginScreenState extends State<LoginScreen>
                                         width: double.infinity,
                                         height: 50,
                                         child: ElevatedButton(
-                                          onPressed: _isLoading ? null : _submitForm,
+                                          onPressed: _isLoading
+                                              ? null
+                                              : _submitForm,
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFF6C63FF),
+                                            backgroundColor: const Color(
+                                              0xFF6C63FF,
+                                            ),
                                             foregroundColor: Colors.white,
                                             shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(12),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                             elevation: 0,
                                           ),
@@ -352,13 +392,16 @@ class _LoginScreenState extends State<LoginScreen>
                                               ? const SizedBox(
                                                   width: 22,
                                                   height: 22,
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2.5,
-                                                    color: Colors.white,
-                                                  ),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2.5,
+                                                        color: Colors.white,
+                                                      ),
                                                 )
                                               : Text(
-                                                  _isRegisterMode ? "Crear Cuenta" : "Entrar",
+                                                  _isRegisterMode
+                                                      ? "Crear Cuenta"
+                                                      : "Entrar",
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 15,
@@ -369,12 +412,16 @@ class _LoginScreenState extends State<LoginScreen>
                                       if (!_isRegisterMode) ...[
                                         const SizedBox(height: 12),
                                         TextButton(
-                                          onPressed: _isLoading ? null : _forgotPassword,
+                                          onPressed: _isLoading
+                                              ? null
+                                              : _forgotPassword,
                                           child: Text(
                                             "¿Olvidaste tu contraseña?",
                                             style: TextStyle(
                                               fontSize: 13,
-                                              color: Colors.white.withOpacity(0.4),
+                                              color: Colors.white.withValues(
+                                                alpha: 0.4,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -393,7 +440,10 @@ class _LoginScreenState extends State<LoginScreen>
                         padding: const EdgeInsets.only(top: 16),
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: Color(0xFFEF4444), fontSize: 13),
+                          style: const TextStyle(
+                            color: Color(0xFFEF4444),
+                            fontSize: 13,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -402,13 +452,16 @@ class _LoginScreenState extends State<LoginScreen>
                         padding: const EdgeInsets.only(top: 16),
                         child: Text(
                           _successMessage!,
-                          style: const TextStyle(color: Color(0xFF22C55E), fontSize: 13),
+                          style: const TextStyle(
+                            color: Color(0xFF22C55E),
+                            fontSize: 13,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),
 
                     const SizedBox(height: 24),
-                    Divider(color: Colors.white.withOpacity(0.1)),
+                    Divider(color: Colors.white.withValues(alpha: 0.1)),
                     const SizedBox(height: 16),
 
                     // Toggle mode
@@ -417,16 +470,20 @@ class _LoginScreenState extends State<LoginScreen>
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          _isRegisterMode ? "¿Ya tenés cuenta?" : "¿No tenés usuario?",
+                          _isRegisterMode
+                              ? "¿Ya tenés cuenta?"
+                              : "¿No tenés usuario?",
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white.withOpacity(0.5),
+                            color: Colors.white.withValues(alpha: 0.5),
                           ),
                         ),
                         TextButton(
                           onPressed: _toggleMode,
                           child: Text(
-                            _isRegisterMode ? "Iniciar Sesión" : "Crear una cuenta",
+                            _isRegisterMode
+                                ? "Iniciar Sesión"
+                                : "Crear una cuenta",
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -463,7 +520,7 @@ class _LoginScreenState extends State<LoginScreen>
             fontSize: 11,
             fontWeight: FontWeight.w500,
             letterSpacing: 1.2,
-            color: Colors.white.withOpacity(0.4),
+            color: Colors.white.withValues(alpha: 0.4),
           ),
         ),
         const SizedBox(height: 6),
@@ -475,17 +532,24 @@ class _LoginScreenState extends State<LoginScreen>
           style: const TextStyle(color: Colors.white, fontSize: 15),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
             filled: true,
             fillColor: const Color(0xFF0D0D1A),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

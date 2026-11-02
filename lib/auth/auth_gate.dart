@@ -404,7 +404,7 @@ class _TrialBannerWrapper extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Text(
@@ -456,10 +456,10 @@ class _NeedsInternetScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A2E),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.06)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     blurRadius: 30,
                     offset: const Offset(0, 12),
                   ),
@@ -480,8 +480,8 @@ class _NeedsInternetScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFFF59E0B).withOpacity(0.15),
-                            const Color(0xFFEF4444).withOpacity(0.15),
+                            const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            const Color(0xFFEF4444).withValues(alpha: 0.15),
                           ],
                         ),
                         shape: BoxShape.circle,
@@ -509,7 +509,7 @@ class _NeedsInternetScreen extends StatelessWidget {
                     reason,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       height: 1.6,
                     ),
                     textAlign: TextAlign.center,
@@ -663,10 +663,10 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1A2E),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withOpacity(0.06)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
+                        color: Colors.black.withValues(alpha: 0.4),
                         blurRadius: 30,
                         offset: const Offset(0, 12),
                       ),
@@ -686,8 +686,8 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                const Color(0xFF6C63FF).withOpacity(0.15),
-                                const Color(0xFF00D2FF).withOpacity(0.15),
+                                const Color(0xFF6C63FF).withValues(alpha: 0.15),
+                                const Color(0xFF00D2FF).withValues(alpha: 0.15),
                               ],
                             ),
                             shape: BoxShape.circle,
@@ -715,10 +715,10 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withOpacity(0.1),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: const Color(0xFF10B981).withOpacity(0.2),
+                            color: const Color(0xFF10B981).withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -726,14 +726,14 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                           children: [
                             Icon(Icons.check_circle_outline,
                                 color:
-                                    const Color(0xFF10B981).withOpacity(0.8),
+                                    const Color(0xFF10B981).withValues(alpha: 0.8),
                                 size: 16),
                             const SizedBox(width: 8),
                             Text(
                               "El administrador fue notificado",
                               style: TextStyle(
                                 color:
-                                    const Color(0xFF10B981).withOpacity(0.9),
+                                    const Color(0xFF10B981).withValues(alpha: 0.9),
                                 fontSize: 13,
                               ),
                             ),
@@ -746,7 +746,7 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                         "Tu acceso será habilitado pronto.\n"
                         "Podés verificar de nuevo o activar el período de prueba.",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.45),
+                          color: Colors.white.withValues(alpha: 0.45),
                           fontSize: 13,
                           height: 1.5,
                         ),
@@ -765,7 +765,7 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                       color: const Color(0xFF1A1A2E),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: const Color(0xFF6C63FF).withOpacity(0.2),
+                        color: const Color(0xFF6C63FF).withValues(alpha: 0.2),
                       ),
                     ),
                     child: Column(
@@ -782,7 +782,7 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                         Text(
                           "Acceso completo al Tone Generator durante 30 días.",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.4),
+                            color: Colors.white.withValues(alpha: 0.4),
                             fontSize: 13,
                           ),
                           textAlign: TextAlign.center,
@@ -826,7 +826,7 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                       color: const Color(0xFF1A1A2E),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: const Color(0xFFEF4444).withOpacity(0.2),
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.2),
                       ),
                     ),
                     child: Column(
@@ -846,7 +846,7 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                         Text(
                           "Contactá al administrador para continuar.",
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.4),
+                            color: Colors.white.withValues(alpha: 0.4),
                             fontSize: 13,
                           ),
                         ),
@@ -861,7 +861,7 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1A2E),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.06)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                   ),
                   child: Column(
                     children: [
@@ -877,7 +877,7 @@ class _PendingAccessScreenState extends State<_PendingAccessScreen> {
                       Text(
                         "Obtené acceso completo con una suscripción.",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha: 0.4),
                           fontSize: 13,
                         ),
                       ),

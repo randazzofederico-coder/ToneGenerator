@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../providers/tone_generator_provider.dart';
 import '../providers/settings_provider.dart';
-import '../models/channel_model.dart';
 import '../providers/session_provider.dart';
 import '../services/deep_link_service.dart';
 import '../services/session_actions.dart';
