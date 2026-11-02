@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fede_apps_core/fede_apps_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
@@ -10,6 +11,7 @@ import 'providers/session_provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/tone_generator_screen.dart';
 import 'services/deep_link_service.dart';
+import 'services/tone_sync_adapter.dart';
 import 'widgets/disclaimer_gate.dart';
 
 void main() async {
@@ -26,19 +28,51 @@ void main() async {
   } catch (e) {
     debugPrint('UsageTracker init failed: $e');
   }
-  runApp(const ToneGeneratorApp());
+
+  // The same provider instances the UI uses (the sync adapter writes into
+  // them).
+  final tone = ToneGeneratorProvider()..init();
+  final sessions = SessionProvider();
+
+  // Account + library sync (fede_apps_core). Without an account it does
+  // nothing, and it never blocks startup.
+  try {
+    // Web restores the Firebase session asynchronously: wait for it (briefly)
+    // so the tombstone purge on load knows whether there is an account.
+    await FirebaseAuth.instance
+        .authStateChanges()
+        .first
+        .timeout(const Duration(seconds: 3));
+  } catch (_) {}
+  try {
+    await LibrarySync.instance
+        .configure(ToneSyncAdapter(sessions: sessions, tone: tone));
+  } catch (e) {
+    debugPrint('LibrarySync configure failed: $e');
+  }
+  // After configure: the purge of old tombstones asks LibrarySync.
+  sessions.loadSessions();
+
+  runApp(ToneGeneratorApp(tone: tone, sessions: sessions));
 }
 
 class ToneGeneratorApp extends StatelessWidget {
-  const ToneGeneratorApp({super.key});
+  const ToneGeneratorApp({
+    super.key,
+    required this.tone,
+    required this.sessions,
+  });
+
+  final ToneGeneratorProvider tone;
+  final SessionProvider sessions;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()..init()),
-        ChangeNotifierProvider(create: (_) => ToneGeneratorProvider()..init()),
-        ChangeNotifierProvider(create: (_) => SessionProvider()..loadSessions()),
+        ChangeNotifierProvider.value(value: tone),
+        ChangeNotifierProvider.value(value: sessions),
       ],
       child: Builder(
         builder: (context) {

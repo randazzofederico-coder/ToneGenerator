@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:fede_apps_core/fede_apps_core.dart'
-    show DeviceIdentity, SyncFields;
+    show DeviceIdentity, LibrarySync, SyncFields;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -18,10 +18,25 @@ import '../models/tone_session.dart';
 ///  * deleting leaves a tombstone (`deleted`, `deletedAt`) in the stored
 ///    list instead of removing it. Tombstones are invisible to the rest of
 ///    the app ([sessions], [getSessionById], [nameExists]) and are purged on
-///    load after `SyncFields.tombstoneRetention` (30 days).
+///    load after `SyncFields.tombstoneRetention` (30 days) — with a signed-in
+///    account, only once the tombstone is synced
+///    (`LibrarySync.canPurgeLocally`).
+///
+/// Cloud sync (fede_apps_core `LibrarySync`, adapter `ToneSyncAdapter`):
+/// every local persisted mutation calls `LibrarySync.notifyLocalChange()`
+/// (see [_persist]); [applyRemote] writes what comes from the cloud as is
+/// and does NOT notify the sync engine.
 class SessionProvider extends ChangeNotifier {
   static const _prefsKey = 'tone_sessions';
   static const _uuid = Uuid();
+
+  /// Sync collection name (`users/{uid}/appData/tonegenerator`).
+  static const syncCollection = 'sessions';
+
+  SessionProvider({LibrarySync? sync}) : _syncOverride = sync;
+
+  final LibrarySync? _syncOverride;
+  LibrarySync get _sync => _syncOverride ?? LibrarySync.instance;
 
   /// Every stored item, tombstones included.
   final List<ToneSession> _items = [];
@@ -56,8 +71,9 @@ class SessionProvider extends ChangeNotifier {
             .toList();
         final now = clock();
         final kept = all
-            .where((s) => !SyncFields.shouldPurge(
-                deleted: s.deleted, deletedAt: s.deletedAt, now: now))
+            .where((s) => !(SyncFields.shouldPurge(
+                    deleted: s.deleted, deletedAt: s.deletedAt, now: now) &&
+                _sync.canPurgeLocally(syncCollection, s.id, s.rev)))
             .toList();
         _items
           ..clear()
@@ -172,6 +188,33 @@ class SessionProvider extends ChangeNotifier {
     return removed;
   }
 
+  /// Applies what came from the cloud (called by `ToneSyncAdapter`): writes
+  /// [upserts] exactly as given (rev, updatedAt, dev and tombstones are NOT
+  /// touched) and physically removes [removals] (purged tombstones).
+  /// Persists and notifies listeners, but never calls
+  /// `LibrarySync.notifyLocalChange` (it isn't a local change).
+  Future<void> applyRemote({
+    required List<Map<String, dynamic>> upserts,
+    required List<String> removals,
+  }) async {
+    await ensureLoaded;
+    for (final json in upserts) {
+      final s = ToneSession.fromJson(json);
+      final i = _indexOf(s.id);
+      if (i >= 0) {
+        _items[i] = s;
+      } else {
+        _items.add(s);
+      }
+    }
+    if (removals.isNotEmpty) {
+      final gone = removals.toSet();
+      _items.removeWhere((s) => gone.contains(s.id));
+    }
+    notifyListeners();
+    await _write();
+  }
+
   int _indexOf(String id) => _items.indexWhere((s) => s.id == id);
 
   String _uniqueName(String base) {
@@ -183,9 +226,12 @@ class SessionProvider extends ChangeNotifier {
     return '$base $n';
   }
 
+  /// Local mutation (save, restore/undo, rename, duplicate, delete, import):
+  /// notify the UI, persist and schedule a cloud sync.
   Future<void> _persist() async {
     notifyListeners();
     await _write();
+    _sync.notifyLocalChange();
   }
 
   Future<void> _write() async {

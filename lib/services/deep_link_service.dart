@@ -163,6 +163,10 @@ class DeepLinkService {
   /// Ensures there is a Firebase user (anonymous if none). The anonymous
   /// account can later be upgraded with `linkWithCredential`, keeping the
   /// same uid so links remain attributed to the user.
+  ///
+  /// Account (fede_apps_core `FedeAccount`): a signed-in Google user is used
+  /// as is — this only signs in anonymously when there is no user at all, and
+  /// never signs out or replaces the current one.
   Future<User> _ensureUser() async {
     final auth = FirebaseAuth.instance;
     final current = auth.currentUser;

@@ -156,6 +156,12 @@
   "@sessionCopyName": {
     "placeholders": { "name": { "type": "String" } }
   },
+  "sessionConflictCopyName": "{name} (otro dispositivo)",
+  "@sessionConflictCopyName": {
+    "description": "Copia creada cuando la misma sesión se editó en dos dispositivos.",
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "settingsAccountTitle": "Cuenta",
 
   "waveSine": "Senoidal",
   "waveSquare": "Cuadrada",

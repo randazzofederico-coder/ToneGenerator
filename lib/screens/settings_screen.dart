@@ -1,5 +1,5 @@
 import 'package:fede_apps_core/fede_apps_core.dart'
-    show EcosystemPrompts, EcosystemSection, FedeApp;
+    show AccountSection, EcosystemPrompts, EcosystemSection, FedeApp;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -56,6 +56,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             children: [
+              // --- ACCOUNT (fede_apps_core: login + library sync) ---
+              _SectionHeader(title: l10n.settingsAccountTitle),
+              const SizedBox(height: 12),
+              Material(
+                color: const Color(0xFF1A1A2E),
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: AccountSection(
+                    hasLibrary: true,
+                    showHeader: false,
+                    iconColor: Color(0xFF6C63FF),
+                    buttonColor: Color(0xFF6C63FF),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
               // --- LANGUAGE ---
               _SectionHeader(title: l10n.settingsLanguageTitle),
               const SizedBox(height: 12),

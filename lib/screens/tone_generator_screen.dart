@@ -177,7 +177,8 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
                           icon: const Icon(Icons.save_outlined, size: 22),
                           tooltip: l10n.tooltipSaveSession,
                           onPressed: provider.isDirty
-                              ? () => saveCurrentSession(context)
+                              ? () =>
+                                  saveCurrentSession(context, offerLogin: true)
                               : null,
                         ),
                         IconButton(
@@ -353,7 +354,7 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
   void _onMenu(BuildContext context, _MenuAction action) {
     switch (action) {
       case _MenuAction.saveAs:
-        saveCurrentSessionAs(context);
+        saveCurrentSessionAs(context, offerLogin: true);
       case _MenuAction.newSession:
         startNewSession(context);
       case _MenuAction.library:

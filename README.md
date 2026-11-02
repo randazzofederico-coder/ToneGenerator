@@ -36,7 +36,8 @@ Aplicación profesional para generar tonos de prueba, calibrar equipos de audio,
 - Muestra la nota musical más cercana (con prefijo `~` si no es temperada)
 
 ### ⚙️ Ajustes
-- **Idioma** arriba de todo: idioma del sistema (por defecto), Español o English
+- **Cuenta** arriba de todo (`AccountSection` de `fede_apps_core`): *Continuar con Google*; con sesión, email, estado de la sincronización, *Sincronizar ahora* y *Cerrar sesión*
+- **Idioma**: idioma del sistema (por defecto), Español o English
 - **Tamaño de interfaz** configurable (70% – 130%)
 - **Comunidad**: acceso al foro (https://federicorandazzo.com.ar/foro/)
 - Advertencia de seguridad auditiva
@@ -49,7 +50,19 @@ Aplicación profesional para generar tonos de prueba, calibrar equipos de audio,
 
 ### 🔐 Autenticación
 - **App libre** — `main.dart` abre directo `DisclaimerGate(child: ToneGeneratorScreen())`. El login heredado (`AuthGate`: Google Sign-In, email/contraseña, permisos vía Firestore, cache offline, trial) fue eliminado; queda en el historial de git. Al iniciar, `SettingsProvider` borra las claves `perm_*` que pudiera haber dejado en `SharedPreferences`
-- El único uso de Auth hoy es el **login anónimo** al compartir sesiones
+- **Cuenta opcional (Google)** — `FedeAccount` de `fede_apps_core`, la misma cuenta del sitio y de las otras apps. Sin cuenta la app funciona igual. Android: `google_sign_in` vinculando la sesión anónima; web: popup
+- **Login anónimo** al compartir sesiones, solo si no hay ningún usuario (`DeepLinkService._ensureUser`): nunca reemplaza ni cierra una sesión de Google; con cuenta, los links quedan a nombre de ese uid
+
+### ☁️ Sincronización de la biblioteca
+- Con sesión iniciada, la biblioteca se sincroniza con `users/{uid}/appData/tonegenerator` (colección `sessions`) mediante `LibrarySync` de `fede_apps_core` (merge por ítem, 1 lectura + como máximo 1 escritura por sync). Sin cuenta o sin internet no hace nada y nunca bloquea
+- **Adapter:** `services/tone_sync_adapter.dart` (`ToneSyncAdapter`). `main.dart` crea `SessionProvider` y `ToneGeneratorProvider` antes de `runApp` (las mismas instancias que usa la UI) y llama a `LibrarySync.instance.configure(...)` después de `Firebase.initializeApp` y `UsageTracker.init`
+- **Cambios locales:** todo lo que persiste la biblioteca (guardar, guardar como, renombrar, duplicar, eliminar, deshacer, importar un link) pasa por `SessionProvider._persist`, que llama a `LibrarySync.instance.notifyLocalChange()` (sync ~10 s después)
+- **Cambios remotos:** `SessionProvider.applyRemote` escribe los ítems tal cual (sin subir `rev` ni tocar `updatedAt`) y no avisa al motor. Si la sesión **abierta** cambió en otro dispositivo: si se borró, se desvincula como en un borrado local (los canales quedan como sesión sin guardar); si se editó y no hay cambios sin guardar ni está sonando, se carga la versión nueva; si hay cambios sin guardar o está sonando, los canales no se tocan y la sesión queda marcada como modificada respecto de la versión nueva
+- **Conflictos:** si la misma sesión se editó en dos dispositivos, gana la de `rev` más alta y la otra queda como copia *"… (otro dispositivo)"* / *"… (other device)"*
+- **Purga de lápidas:** al cargar, solo si `LibrarySync.instance.canPurgeLocally(...)` (con cuenta: cuando ya se sincronizaron)
+- **Sugerencia de login:** después de guardar una sesión **nueva** con 💾 o *Guardar como…* (con ≥ 3 sesiones, sin cuenta y con los límites de `PromptGate`; nunca sobre la advertencia de seguridad)
+- **Requisitos:** Android: SHA-1/SHA-256 de las firmas en el proyecto Firebase y `google-services.json` actualizado; web: dominio autorizado en Firebase Auth
+- Tests: `test/tone_sync_test.dart` (dos dispositivos con `InMemoryRemoteStore`)
 
 ### 📚 Biblioteca de sesiones
 - **Sesión** = canales (frecuencia, onda, volumen, paneo, M/S/Ø) + Master Volume
@@ -165,7 +178,8 @@ lib/
 │   ├── deep_link_service.dart         # Links compartidos (Firestore + App Links)
 │   ├── deep_link_web.dart             # JS interop (URL, launchQueue, Web Share)
 │   ├── deep_link_stub.dart            # No-op fuera de la web
-│   └── share_import_service.dart      # Importación idempotente
+│   ├── share_import_service.dart      # Importación idempotente
+│   └── tone_sync_adapter.dart         # Adapter de LibrarySync (cuenta + sync)
 ├── theme/
 │   ├── app_colors.dart                # Paleta compartida
 │   └── ui_scale.dart                  # Sistema de escalado dimensional

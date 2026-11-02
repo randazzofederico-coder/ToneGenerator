@@ -112,6 +112,8 @@
   "channelCount": "{count, plural, =1{1 channel} other{{count} channels}}",
   "sessionDefaultName": "Session",
   "sessionCopyName": "{name} (copy)",
+  "sessionConflictCopyName": "{name} (other device)",
+  "settingsAccountTitle": "Account",
 
   "waveSine": "Sine",
   "waveSquare": "Square",

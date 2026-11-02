@@ -9,11 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tone_generator/main.dart';
+import 'package:tone_generator/providers/session_provider.dart';
+import 'package:tone_generator/providers/tone_generator_provider.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ToneGeneratorApp());
+    await tester.pumpWidget(ToneGeneratorApp(
+        tone: ToneGeneratorProvider(), sessions: SessionProvider()));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

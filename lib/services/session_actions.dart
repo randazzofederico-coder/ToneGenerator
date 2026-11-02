@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import 'package:fede_apps_core/fede_apps_core.dart'
+    show EcosystemPrompts, FedeApp;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -5,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../l10n/l10n.dart';
 import '../models/tone_session.dart';
 import '../providers/session_provider.dart';
+import '../providers/settings_provider.dart';
 import '../providers/tone_generator_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/share_sheet.dart';
@@ -106,8 +111,13 @@ Future<String?> askSessionName(
 
 /// 💾 Saves the current state over the active session (with UNDO). If there
 /// is no active session in the library, asks for a name ("Guardar como…").
+///
+/// [offerLogin]: only for the explicit "Guardar" / "Guardar como" buttons —
+/// after saving a NEW session, maybe suggest signing in (see
+/// [_maybeOfferLogin]). Flows that continue with another sheet or a
+/// navigation (share, unsaved-changes dialog, rename) leave it off.
 Future<bool> saveCurrentSession(BuildContext context,
-    {bool offerUndo = true}) async {
+    {bool offerUndo = true, bool offerLogin = false}) async {
   final tone = context.read<ToneGeneratorProvider>();
   final library = context.read<SessionProvider>();
   await library.ensureLoaded;
@@ -116,7 +126,7 @@ Future<bool> saveCurrentSession(BuildContext context,
   final previous = id == null ? null : library.getSessionById(id);
   if (previous == null) {
     if (!context.mounted) return false;
-    return saveCurrentSessionAs(context);
+    return saveCurrentSessionAs(context, offerLogin: offerLogin);
   }
 
   final updated = tone.captureSession(
@@ -144,7 +154,8 @@ Future<bool> saveCurrentSession(BuildContext context,
 }
 
 /// Saves the current state as a new library session (asks for a name).
-Future<bool> saveCurrentSessionAs(BuildContext context) async {
+Future<bool> saveCurrentSessionAs(BuildContext context,
+    {bool offerLogin = false}) async {
   final tone = context.read<ToneGeneratorProvider>();
   final library = context.read<SessionProvider>();
   await library.ensureLoaded;
@@ -162,8 +173,25 @@ Future<bool> saveCurrentSessionAs(BuildContext context) async {
   tone.markSaved(session);
   if (context.mounted) {
     showAppSnack(context, context.l10n.sessionSaved(name));
+    if (offerLogin) _maybeOfferLogin(context, library.sessions.length);
   }
   return true;
+}
+
+/// Layered login suggestion (fede_apps_core: shown only with ≥ 3 sessions,
+/// without an account, rate-limited by `PromptGate`). Fire-and-forget and
+/// never on top of the safety disclaimer.
+void _maybeOfferLogin(BuildContext context, int libraryCount) {
+  final settings = context.read<SettingsProvider?>();
+  if (settings == null || !settings.disclaimerAccepted) return;
+  unawaited(EcosystemPrompts.maybeShowLoginPrompt(
+    context,
+    currentApp: FedeApp.toneGenerator,
+    libraryCount: libraryCount,
+  ).catchError((Object e) {
+    debugPrint('Login prompt failed: $e');
+    return false;
+  }));
 }
 
 String _newId() => const Uuid().v4();

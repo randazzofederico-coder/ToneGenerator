@@ -704,6 +704,18 @@ abstract class AppLocalizations {
   /// **'{name} (copia)'**
   String sessionCopyName(String name);
 
+  /// Copia creada cuando la misma sesión se editó en dos dispositivos.
+  ///
+  /// In es, this message translates to:
+  /// **'{name} (otro dispositivo)'**
+  String sessionConflictCopyName(String name);
+
+  /// No description provided for @settingsAccountTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuenta'**
+  String get settingsAccountTitle;
+
   /// No description provided for @waveSine.
   ///
   /// In es, this message translates to:

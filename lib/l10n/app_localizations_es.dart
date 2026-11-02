@@ -355,6 +355,14 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String sessionConflictCopyName(String name) {
+    return '$name (otro dispositivo)';
+  }
+
+  @override
+  String get settingsAccountTitle => 'Cuenta';
+
+  @override
   String get waveSine => 'Senoidal';
 
   @override
