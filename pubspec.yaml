@@ -23,6 +23,8 @@ dependencies:
     path: packages/native_audio_engine
   share_plus: ^12.0.2
   url_launcher: ^6.3.1
+  fede_apps_core:
+    path: ../fede_apps_core
 
   # Firebase
   firebase_core: ^3.12.1

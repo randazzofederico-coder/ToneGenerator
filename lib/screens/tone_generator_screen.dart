@@ -1,3 +1,5 @@
+import 'package:fede_apps_core/fede_apps_core.dart'
+    show EcosystemPrompts, FedeApp;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -535,7 +537,20 @@ class _PlayButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPlaying = provider.isPlaying;
     return GestureDetector(
-      onTap: () => provider.togglePlayback(),
+      onTap: () {
+        final wasPlaying = provider.isPlaying;
+        provider.togglePlayback();
+        // Quiet moment after a manual stop: maybe suggest the other apps.
+        if (wasPlaying &&
+            !provider.isPlaying &&
+            context.mounted &&
+            context.read<SettingsProvider>().disclaimerAccepted) {
+          EcosystemPrompts.maybeShowAppsPrompt(
+            context,
+            currentApp: FedeApp.toneGenerator,
+          );
+        }
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 52,

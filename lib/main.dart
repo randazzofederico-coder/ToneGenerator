@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fede_apps_core/fede_apps_core.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +20,12 @@ void main() async {
   // Capture the shared link (?share=) BEFORE runApp: it is processed once the
   // main screen is shown (after the safety disclaimer).
   await DeepLinkService().captureInitialLink();
+  // Local usage metrics (fede_apps_core). Never blocks startup.
+  try {
+    await UsageTracker.instance.init();
+  } catch (e) {
+    debugPrint('UsageTracker init failed: $e');
+  }
   runApp(const ToneGeneratorApp());
 }
 

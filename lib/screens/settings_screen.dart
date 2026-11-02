@@ -1,3 +1,5 @@
+import 'package:fede_apps_core/fede_apps_core.dart'
+    show EcosystemPrompts, EcosystemSection, FedeApp;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -14,8 +16,28 @@ Future<void> _openUrl(String url) async {
   }
 }
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Quiet moment (entering Settings): maybe suggest the other apps.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Never on top of the safety disclaimer.
+      if (!context.read<SettingsProvider>().disclaimerAccepted) return;
+      EcosystemPrompts.maybeShowAppsPrompt(
+        context,
+        currentApp: FedeApp.toneGenerator,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -166,6 +188,29 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // --- MORE APPS (fede_apps_core) ---
+              _SectionHeader(title: l10n.settingsMoreAppsTitle),
+              const SizedBox(height: 12),
+              Material(
+                color: const Color(0xFF1A1A2E),
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  // The site link is already in "About" (showSite: false).
+                  child: EcosystemSection(
+                    currentApp: FedeApp.toneGenerator,
+                    showHeader: false,
+                    showSite: false,
+                  ),
                 ),
               ),
 

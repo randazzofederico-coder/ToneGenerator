@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fede_apps_core/fede_apps_core.dart' show UsageTracker;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -249,6 +250,8 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (!_isReady) return;
     _mixer.startPlayback();
     _isPlaying = true;
+    // Usage metrics: tones sounding = main activity.
+    UsageTracker.instance.startActivity();
     notifyListeners();
   }
 
@@ -256,6 +259,7 @@ class ToneGeneratorProvider extends ChangeNotifier {
     if (!_isReady) return;
     _mixer.stopPlayback();
     _isPlaying = false;
+    UsageTracker.instance.stopActivity();
     notifyListeners();
   }
 
@@ -442,6 +446,8 @@ class ToneGeneratorProvider extends ChangeNotifier {
   @override
   void dispose() {
     _saveTimer?.cancel();
+    if (_isPlaying) UsageTracker.instance.stopActivity();
+    _isPlaying = false;
     if (_isReady) {
       _mixer.stopPlayback();
       _mixer.dispose();

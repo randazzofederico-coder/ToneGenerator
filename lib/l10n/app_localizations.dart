@@ -266,6 +266,12 @@ abstract class AppLocalizations {
   /// **'Ir al Foro'**
   String get settingsForumButton;
 
+  /// No description provided for @settingsMoreAppsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Más apps'**
+  String get settingsMoreAppsTitle;
+
   /// No description provided for @settingsAboutTitle.
   ///
   /// In es, this message translates to:
