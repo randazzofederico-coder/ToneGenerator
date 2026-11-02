@@ -134,6 +134,38 @@ void main() {
       expect(tone.channels[1].id, id);
     });
 
+    testWidgets('DESHACER after saving restores the session as it was',
+        (tester) async {
+      await loadLibrary();
+      var now = DateTime(2026, 1, 1);
+      library.clock = () => now;
+      tone.addChannel(freq: 100);
+      final s = tone.captureSession(id: 's1', name: 'Uno');
+      await library.saveSession(s);
+      tone.markSaved(s);
+      now = DateTime(2026, 1, 2);
+      await library.saveSession(tone.captureSession(id: 's2', name: 'Dos'));
+      final before = library.getSessionById('s1')!;
+
+      now = DateTime(2026, 1, 3);
+      tone.addChannel(freq: 200);
+      await tester.pumpWidget(app((ctx) => saveCurrentSession(ctx)));
+      await tester.tap(find.text('go'));
+      await tester.pumpAndSettle();
+      expect(library.sessions.first.id, 's1');
+      expect(library.getSessionById('s1')!.channels.length, 2);
+
+      await tester.tap(find.text('DESHACER'));
+      await tester.pumpAndSettle();
+      final after = library.getSessionById('s1')!;
+      expect(after.channels, before.channels);
+      expect(after.updatedAt, DateTime(2026, 1, 1));
+      expect(after.createdAt, before.createdAt);
+      expect(library.sessions.map((x) => x.id), ['s2', 's1']);
+      expect(after.rev, before.rev + 2);
+      expect(tone.isDirty, isTrue);
+    });
+
     testWidgets('tap-to-rename renames library entry and open session',
         (tester) async {
       await loadLibrary();

@@ -160,16 +160,74 @@ void main() {
       expect(again.allItems.length, 2);
     });
 
-    test('undo of delete revives with a newer rev', () async {
-      final lib = SessionProvider();
+    test('undo of delete restores the exact session with a newer rev',
+        () async {
+      var now = DateTime(2026, 1, 1);
+      final lib = SessionProvider()..clock = () => now;
       await lib.loadSessions();
-      await lib.saveSession(_sample());
-      final removed = await lib.deleteSession('s1');
-      final revived = await lib.saveSession(removed!);
+      await lib.saveSession(_sample()); // updatedAt 2026-01-01
+      now = DateTime(2026, 1, 2);
+      await lib.saveSession(_sample(id: 's2', name: 'Dos'));
+      now = DateTime(2026, 1, 3);
+      await lib.saveSession(_sample(id: 's3', name: 'Tres'));
+      expect(lib.sessions.map((s) => s.id), ['s3', 's2', 's1']);
+
+      now = DateTime(2026, 1, 4);
+      final before = lib.getSessionById('s2')!;
+      final removed = await lib.deleteSession('s2');
+      now = DateTime(2026, 1, 5);
+      final revived = await lib.restoreSnapshot(removed!);
+
+      // Back in time for the user: same data, same dates, same position.
+      expect(revived.name, before.name);
+      expect(revived.channels, before.channels);
+      expect(revived.masterVolume, before.masterVolume);
+      expect(revived.createdAt, before.createdAt);
+      expect(revived.updatedAt, DateTime(2026, 1, 2));
+      expect(lib.sessions.map((s) => s.id), ['s3', 's2', 's1']);
+      // ...but a newer revision than the tombstone for sync.
       expect(revived.rev, 3);
       expect(revived.deleted, isFalse);
       expect(revived.deletedAt, isNull);
-      expect(lib.sessions.single.id, 's1');
+      expect(revived.device, deviceId);
+
+      final stored = (await _stored()).firstWhere((m) => m['id'] == 's2');
+      expect(stored['updatedAt'], DateTime(2026, 1, 2).toIso8601String());
+      expect(stored[SyncFields.rev], 3);
+    });
+
+    test('undo of overwrite restores the previous content and dates',
+        () async {
+      var now = DateTime(2026, 1, 1);
+      final lib = SessionProvider()..clock = () => now;
+      await lib.loadSessions();
+      await lib.saveSession(_sample());
+      now = DateTime(2026, 1, 2);
+      await lib.saveSession(_sample(id: 's2', name: 'Dos'));
+      expect(lib.sessions.map((s) => s.id), ['s2', 's1']);
+
+      final previous = lib.getSessionById('s1')!;
+      now = DateTime(2026, 1, 3);
+      final overwritten = await lib.saveSession(previous.copyWith(
+        channels: const [
+          {'f': 880.0, 'w': 1, 'v': 0.3}
+        ],
+        masterVolume: 0.2,
+      ));
+      expect(overwritten.updatedAt, DateTime(2026, 1, 3));
+      expect(lib.sessions.map((s) => s.id), ['s1', 's2']);
+
+      now = DateTime(2026, 1, 4);
+      final restored = await lib.restoreSnapshot(previous);
+      expect(restored.channels, previous.channels);
+      expect(restored.masterVolume, 0.8);
+      expect(restored.name, 'Uno');
+      expect(restored.createdAt, previous.createdAt);
+      expect(restored.updatedAt, DateTime(2026, 1, 1));
+      expect(lib.sessions.map((s) => s.id), ['s2', 's1']);
+      expect(restored.rev, 3);
+      expect(restored.device, deviceId);
+      expect(lib.getSessionById('s1')!.rev, 3);
     });
 
     test('tombstones are purged on load after 30 days', () async {

@@ -132,7 +132,7 @@ Future<bool> saveCurrentSession(BuildContext context,
       actionLabel: offerUndo ? l10n.actionUndo : null,
       onAction: offerUndo
           ? () async {
-              await library.saveSession(previous);
+              await library.restoreSnapshot(previous);
               if (tone.activeSessionId == previous.id) {
                 tone.setSavedReference(previous);
               }

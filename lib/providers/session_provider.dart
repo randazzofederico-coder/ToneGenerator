@@ -91,9 +91,10 @@ class SessionProvider extends ChangeNotifier {
   ///
   /// Sync fields of [session] are ignored: if an item with the same ID is
   /// stored (live or tombstone) the result is `rev + 1` of it — so saving
-  /// over a tombstone (undo of a delete, re-importing a deleted link)
-  /// revives it with a newer revision than the deletion. Otherwise it's a
-  /// new item at `rev 1`. Always `updatedAt = now`, `dev = this device`.
+  /// over a tombstone (re-importing a deleted link) revives it with a newer
+  /// revision than the deletion (undo uses [restoreSnapshot] instead, which
+  /// keeps the original dates). Otherwise it's a new item at `rev 1`.
+  /// Always `updatedAt = now`, `dev = this device`.
   Future<ToneSession> saveSession(ToneSession session) async {
     final i = _indexOf(session.id);
     final stamped = session.revised(
@@ -108,6 +109,25 @@ class SessionProvider extends ChangeNotifier {
     }
     await _persist();
     return stamped;
+  }
+
+  /// Undo: puts [snapshot] back exactly as it was — name, channels, volume,
+  /// `createdAt` and `updatedAt` (so it returns to the same position in the
+  /// list). Only the sync fields move forward: `rev` = stored rev + 1 (also
+  /// over a tombstone, reviving it), `dev = this device`, not deleted.
+  Future<ToneSession> restoreSnapshot(ToneSession snapshot) async {
+    final i = _indexOf(snapshot.id);
+    final restored = snapshot.restored(
+      rev: i >= 0 ? _items[i].rev + 1 : snapshot.rev + 1,
+      device: DeviceIdentity.id,
+    );
+    if (i >= 0) {
+      _items[i] = restored;
+    } else {
+      _items.add(restored);
+    }
+    await _persist();
+    return restored;
   }
 
   Future<ToneSession?> renameSession(String id, String name) async {
@@ -142,7 +162,7 @@ class SessionProvider extends ChangeNotifier {
   }
 
   /// Deletes a session (leaves a tombstone); returns the live session as it
-  /// was (for undo → [saveSession] revives it) or null if missing.
+  /// was (for undo → [restoreSnapshot] revives it) or null if missing.
   Future<ToneSession?> deleteSession(String id) async {
     final i = _indexOf(id);
     if (i < 0 || _items[i].deleted) return null;

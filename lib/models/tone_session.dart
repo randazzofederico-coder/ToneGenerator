@@ -186,6 +186,22 @@ class ToneSession {
     );
   }
 
+  /// This exact snapshot (data, `createdAt` and `updatedAt` untouched) as a
+  /// new live revision: only [rev] and [device] change and it's not deleted.
+  /// Used by undo: "back in time" for the user, but a newer rev for sync.
+  ToneSession restored({required int rev, String? device}) {
+    return ToneSession(
+      id: id,
+      name: name,
+      channels: channels,
+      masterVolume: masterVolume,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      rev: rev,
+      device: device,
+    );
+  }
+
   /// Tombstone of this session: `rev + 1`, `deleted`, `deletedAt = now`.
   ToneSession tombstoned({required DateTime now, String? device}) {
     return ToneSession(

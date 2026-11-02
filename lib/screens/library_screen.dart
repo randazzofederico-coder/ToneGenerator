@@ -310,7 +310,7 @@ class _SessionTile extends StatelessWidget {
       l10n.sessionDeleted(removed.name),
       actionLabel: l10n.actionUndo,
       onAction: () async {
-        await library.saveSession(removed);
+        await library.restoreSnapshot(removed);
         tone.reattach(removed);
       },
     );
