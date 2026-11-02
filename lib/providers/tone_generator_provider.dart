@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../l10n/l10n.dart';
 import '../models/channel_model.dart';
 import '../models/tone_session.dart';
 import 'package:native_audio_engine/live_mixer.dart';
@@ -69,7 +70,8 @@ class ToneGeneratorProvider extends ChangeNotifier {
   String? get activeSessionName => _activeSessionName;
 
   /// Name shown in the UI.
-  String get displayName => _activeSessionName ?? 'Sin título';
+  String get displayName =>
+      _activeSessionName ?? L10n.current.untitledSession;
 
   /// True when the current state differs from the open session as saved.
   /// For an unsaved session, true as soon as there is any channel.

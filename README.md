@@ -36,9 +36,18 @@ Aplicación profesional para generar tonos de prueba, calibrar equipos de audio,
 - Muestra la nota musical más cercana (con prefijo `~` si no es temperada)
 
 ### ⚙️ Ajustes
+- **Idioma** arriba de todo: idioma del sistema (por defecto), Español o English
 - **Tamaño de interfaz** configurable (70% – 130%)
+- **Comunidad**: acceso al foro (https://federicorandazzo.com.ar/foro/)
 - Información de sesión y verificación
 - Advertencia de seguridad auditiva
+
+### 🌐 Idiomas
+- Español e inglés con `flutter_localizations` + `intl` (gen-l10n). Textos en `lib/l10n/app_es.arb` (plantilla) y `app_en.arb`
+- Por defecto sigue el idioma del sistema (cualquier `es_*` → español; el resto → inglés). Se puede forzar en Ajustes o desde la advertencia de seguridad inicial; se guarda en `SharedPreferences` (`settings_language`)
+- En widgets: `context.l10n.clave`. Fuera de widgets (modelos, providers, servicios): `L10n.current.clave`, sincronizado desde el `builder` del `MaterialApp`
+- `test/l10n_test.dart` verifica que ambos idiomas tengan las mismas claves y placeholders
+- Las pantallas de `lib/auth/` (no en uso) siguen sin traducir
 
 ### 🔐 Autenticación
 - **App libre (estado actual)** — `main.dart` abre directo `DisclaimerGate(child: ToneGeneratorScreen())`. El `AuthGate` (Google Sign-In, email/contraseña, permisos vía Firestore, cache offline de 30 días, trial) se conserva en `lib/auth/` para reactivarlo en el futuro
@@ -137,6 +146,10 @@ El motor web utiliza nodos nativos del Web Audio API para lograr cambios de par�
 lib/
 ├── main.dart                          # Entry point, providers, MaterialApp
 ├── firebase_options.dart              # Firebase config
+├── l10n/
+│   ├── app_es.arb / app_en.arb        # Textos (español = plantilla)
+│   ├── app_localizations*.dart        # Generado por gen-l10n
+│   └── l10n.dart                      # context.l10n, L10n.current, resolveAppLocale
 ├── auth/
 │   ├── auth_gate.dart                 # Auth flow + permission checker
 │   ├── auth_repository.dart           # Permission cache (SharedPreferences)
@@ -149,7 +162,7 @@ lib/
 ├── providers/
 │   ├── tone_generator_provider.dart   # Canales, playback, mixer, sesión activa, estado de trabajo
 │   ├── session_provider.dart          # Biblioteca de sesiones (SharedPreferences)
-│   └── settings_provider.dart         # UI scale, disclaimer
+│   └── settings_provider.dart         # UI scale, disclaimer, idioma
 ├── screens/
 │   ├── tone_generator_screen.dart     # Pantalla principal + recepción de links
 │   ├── library_screen.dart            # Biblioteca de sesiones
@@ -226,7 +239,7 @@ flutter run -d chrome
 flutter run
 
 # Tests
-flutter test test/sharing_test.dart test/session_ui_test.dart
+flutter test test/sharing_test.dart test/session_ui_test.dart test/l10n_test.dart
 
 # El motor nativo (C++/FFI) no requiere recompilación para cambios web
 ```
@@ -246,10 +259,11 @@ App Links: `mi-web-fede/public/.well-known/assetlinks.json` incluye `com.saroo.t
 - **Motor de audio** (`packages/native_audio_engine`) — Código compartido con Metrónomo/Afinador. No aplicar "arreglos automáticos" de warnings ahí sin revisar: quitar los valores por defecto de `_WebChannel` (`muted`, `solo`, `phaseInvert`) en `live_mixer_web.dart` rompe el build web
 - **Problemas conocidos (no afectan la app)**
   - `packages/native_audio_engine/example` no encuentra `SoundTouchProcessor` (el ejemplo no se compila con la app)
-  - `test/widget_test.dart` es la plantilla de Flutter (contador) y falla; los tests válidos son `sharing_test.dart` y `session_ui_test.dart`
+  - `test/widget_test.dart` es la plantilla de Flutter (contador) y falla; los tests válidos son `sharing_test.dart`, `session_ui_test.dart` y `l10n_test.dart`
 - **Fin de línea** — `core.autocrlf=true`: los avisos *LF will be replaced by CRLF* de git son normales
-- **Tests de widgets** — Crear `SessionProvider` dentro del cuerpo de cada `testWidgets` (no en `setUp`): su `Completer` creado fuera del *fake async* nunca resuelve
-- **Antes de commitear** — `flutter analyze lib` sin errores y `flutter test test/sharing_test.dart test/session_ui_test.dart` en verde
+- **Tests de widgets** — Crear `SessionProvider` dentro del cuerpo de cada `testWidgets` (no en `setUp`): su `Completer` creado fuera del *fake async* nunca resuelve. El `MaterialApp` de prueba necesita `localizationsDelegates` (los flujos usan `context.l10n`); los tests que verifican textos fijan `locale: Locale('es')` / `L10n.current` en español
+- **Textos nuevos** — Agregar la clave en `app_es.arb` y `app_en.arb` y correr `flutter gen-l10n` (también se regenera con `flutter pub get` / `flutter run`). No hardcodear strings visibles en la UI
+- **Antes de commitear** — `flutter analyze lib` sin errores y `flutter test test/sharing_test.dart test/session_ui_test.dart test/l10n_test.dart` en verde
 
 ## Historial de cambios
 
@@ -260,6 +274,7 @@ App Links: `mi-web-fede/public/.well-known/assetlinks.json` incluye `com.saroo.t
 | 2026-11-01 | App Links Android, PWA (`launch_handler`, `launchQueue`) y meta tags para previews |
 | 2026-11-01 | Renombrar tocando el nombre, compartir junto a guardar, DESHACER al borrar canal, snackbars que se ocultan solos |
 | 2026-11-01 | Limpieza de warnings (`withValues`, imports sin uso, formato) |
+| 2026-11-01 | Idioma inglés (gen-l10n), selector de idioma arriba de todo en Ajustes y acceso al foro |
 
 ## Seguridad Auditiva
 

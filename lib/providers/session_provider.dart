@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../l10n/l10n.dart';
 import '../models/tone_session.dart';
 
 /// Library of saved sessions, persisted in SharedPreferences as a JSON list.
@@ -84,7 +85,7 @@ class SessionProvider extends ChangeNotifier {
     final now = DateTime.now();
     final copy = original.copyWith(
       id: _uuid.v4(),
-      name: _uniqueName('${original.name} (copia)'),
+      name: _uniqueName(L10n.current.sessionCopyName(original.name)),
       createdAt: now,
       updatedAt: now,
     );

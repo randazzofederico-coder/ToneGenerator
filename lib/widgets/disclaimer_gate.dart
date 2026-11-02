@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/l10n.dart';
 import '../providers/settings_provider.dart';
 
 /// Shows a safety disclaimer on first launch.
@@ -17,6 +18,7 @@ class DisclaimerGate extends StatelessWidget {
 
     if (accepted) return child;
 
+    final l10n = context.l10n;
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D1A),
       body: Center(
@@ -42,28 +44,18 @@ class DisclaimerGate extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Title
-              const Text(
-                'Advertencia de Seguridad',
-                style: TextStyle(
+              Text(
+                l10n.disclaimerTitle,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Safety Warning',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.35),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
               const SizedBox(height: 24),
 
-              // Warning text
+              // Warning text (in the active language)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -76,60 +68,11 @@ class DisclaimerGate extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _paragraph(
-                      '⚠️  Podés dañar tu audición o tus parlantes si reproducís tonos a volúmenes extremos.',
-                      bold: true,
-                    ),
+                    _paragraph(l10n.disclaimerParagraph1, bold: true),
                     const SizedBox(height: 16),
-                    _paragraph(
-                      'Las personas no escuchan bien los sonidos por debajo de 20 Hz ni por encima de '
-                      '10.000 Hz. Si subís el volumen del dispositivo para compensar, podrías exponerte '
-                      'a niveles de sonido dañinos y someter a tus parlantes a corrientes perjudiciales.',
-                    ),
+                    _paragraph(l10n.disclaimerParagraph2),
                     const SizedBox(height: 16),
-                    _paragraph(
-                      'Para ser prudente, encontrá el nivel de volumen que te permita escuchar un tono '
-                      'de 1.000 Hz sin molestias y no te alejes mucho de ese nivel, aunque no escuches '
-                      'mucho — especialmente en el rango agudo, donde tu audición es más frágil.',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // English version (smaller)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.white.withValues(alpha: 0.02),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _paragraph(
-                      'You can damage your hearing or your speakers if you play tones at extreme volumes.',
-                      bold: true,
-                      small: true,
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(height: 12),
-                    _paragraph(
-                      "People can't hear sounds < 20 Hz and > 10,000 Hz very well. If you turn up "
-                      'the volume on your device to compensate, you could expose yourself to harmful '
-                      'sound levels and your speakers to harmful currents.',
-                      small: true,
-                      color: Colors.white.withValues(alpha: 0.4),
-                    ),
-                    const SizedBox(height: 12),
-                    _paragraph(
-                      'To be safe, note the volume level that allows you to listen to a 1,000 Hz '
-                      'tone without discomfort and do not stray too far above this level, even if '
-                      'you can\'t hear much — especially in the high range, where your hearing is '
-                      'the most fragile.',
-                      small: true,
-                      color: Colors.white.withValues(alpha: 0.4),
-                    ),
+                    _paragraph(l10n.disclaimerParagraph3),
                   ],
                 ),
               ),
@@ -151,15 +94,19 @@ class DisclaimerGate extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Entiendo y acepto',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.disclaimerAccept,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // Language can be changed before accepting.
+              _LanguageToggle(),
             ],
           ),
         ),
@@ -181,6 +128,41 @@ class DisclaimerGate extends StatelessWidget {
         fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
         height: 1.5,
       ),
+    );
+  }
+}
+
+/// Compact "Español · English" switch shown under the accept button.
+class _LanguageToggle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.read<SettingsProvider>();
+    final current = Localizations.localeOf(context).languageCode;
+
+    Widget option(String code, String label) {
+      final active = current == code;
+      return TextButton(
+        onPressed: active ? null : () => settings.setLanguage(code),
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.white.withValues(alpha: 0.5),
+          disabledForegroundColor: const Color(0xFF6C63FF),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                fontWeight: active ? FontWeight.w700 : FontWeight.w400)),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.translate_rounded,
+            size: 16, color: Colors.white.withValues(alpha: 0.3)),
+        const SizedBox(width: 4),
+        option('es', context.l10n.languageSpanish),
+        Text('·', style: TextStyle(color: Colors.white.withValues(alpha: 0.3))),
+        option('en', context.l10n.languageEnglish),
+      ],
     );
   }
 }

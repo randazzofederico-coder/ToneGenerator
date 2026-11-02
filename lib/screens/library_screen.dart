@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n.dart';
 import '../models/tone_session.dart';
 import '../providers/session_provider.dart';
 import '../providers/tone_generator_provider.dart';
@@ -37,7 +38,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Biblioteca'),
+        title: Text(context.l10n.libraryTitle),
         backgroundColor: AppColors.surface,
       ),
       body: Center(
@@ -51,7 +52,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   controller: _searchController,
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
-                    hintText: 'Buscar sesión',
+                    hintText: context.l10n.librarySearchHint,
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _query.isEmpty
                         ? null
@@ -108,8 +109,8 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               searching
-                  ? 'No hay sesiones con ese nombre'
-                  : 'Todavía no guardaste sesiones.\nUsá 💾 en la pantalla principal para guardar la actual.',
+                  ? context.l10n.libraryNoResults
+                  : context.l10n.libraryEmpty,
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.45)),
             ),
@@ -130,6 +131,7 @@ class _SessionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -165,7 +167,7 @@ class _SessionTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _subtitle(),
+                        _subtitle(l10n),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -183,32 +185,32 @@ class _SessionTile extends StatelessWidget {
                       color: AppColors.primary.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text('Abierta',
-                        style: TextStyle(
+                    child: Text(l10n.libraryOpenBadge,
+                        style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600)),
                   ),
                 PopupMenuButton<_Action>(
-                  tooltip: 'Opciones',
+                  tooltip: l10n.tooltipOptions,
                   color: AppColors.surfaceHigh,
                   onSelected: (a) => _onAction(context, a),
-                  itemBuilder: (_) => const [
+                  itemBuilder: (_) => [
                     PopupMenuItem(
                         value: _Action.open,
-                        child: _MenuRow(Icons.open_in_new, 'Abrir')),
+                        child: _MenuRow(Icons.open_in_new, l10n.menuOpen)),
                     PopupMenuItem(
                         value: _Action.share,
-                        child: _MenuRow(Icons.share_outlined, 'Compartir')),
+                        child: _MenuRow(Icons.share_outlined, l10n.menuShare)),
                     PopupMenuItem(
                         value: _Action.duplicate,
-                        child: _MenuRow(Icons.copy_rounded, 'Duplicar')),
+                        child: _MenuRow(Icons.copy_rounded, l10n.menuDuplicate)),
                     PopupMenuItem(
                         value: _Action.rename,
-                        child: _MenuRow(Icons.edit_outlined, 'Renombrar')),
+                        child: _MenuRow(Icons.edit_outlined, l10n.menuRename)),
                     PopupMenuItem(
                         value: _Action.delete,
-                        child: _MenuRow(Icons.delete_outline, 'Eliminar',
+                        child: _MenuRow(Icons.delete_outline, l10n.menuDelete,
                             color: AppColors.danger)),
                   ],
                 ),
@@ -220,7 +222,7 @@ class _SessionTile extends StatelessWidget {
     );
   }
 
-  String _subtitle() {
+  String _subtitle(AppLocalizations l10n) {
     final freqs = session
         .buildChannels()
         .map((c) => c.frequency >= 1000
@@ -230,7 +232,7 @@ class _SessionTile extends StatelessWidget {
         .join(' · ');
     final more = session.channels.length > 4 ? ' …' : '';
     return freqs.isEmpty
-        ? 'Sin canales'
+        ? l10n.libraryNoChannels
         : '${session.summaryLabel} — $freqs$more';
   }
 
@@ -242,26 +244,27 @@ class _SessionTile extends StatelessWidget {
   Future<void> _onAction(BuildContext context, _Action action) async {
     final library = context.read<SessionProvider>();
     final tone = context.read<ToneGeneratorProvider>();
+    final l10n = context.l10n;
     switch (action) {
       case _Action.open:
         await _open(context);
       case _Action.share:
         if (session.channels.isEmpty) {
-          showAppSnack(context, 'La sesión no tiene canales para compartir.');
+          showAppSnack(context, l10n.sessionNoChannelsToShare);
           return;
         }
         shareSession(context, session);
       case _Action.duplicate:
         final copy = await library.duplicateSession(session.id);
         if (copy != null && context.mounted) {
-          showAppSnack(context, 'Se creó «${copy.name}»');
+          showAppSnack(context, l10n.sessionDuplicated(copy.name));
         }
       case _Action.rename:
         final name = await askSessionName(
           context,
-          title: 'Renombrar sesión',
+          title: l10n.renameSessionTitle,
           initial: session.name,
-          confirmLabel: 'RENOMBRAR',
+          confirmLabel: l10n.actionRename,
           exceptId: session.id,
         );
         if (name == null || name == session.name) return;
@@ -274,22 +277,23 @@ class _SessionTile extends StatelessWidget {
 
   Future<void> _delete(BuildContext context, SessionProvider library,
       ToneGeneratorProvider tone) async {
+    final l10n = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Eliminar sesión'),
-        content: Text('¿Eliminar «${session.name}» de la biblioteca?'),
+        title: Text(l10n.deleteSessionTitle),
+        content: Text(l10n.deleteSessionConfirm(session.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('CANCELAR',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(l10n.actionCancel,
+                style: const TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('ELIMINAR',
-                style: TextStyle(
+            child: Text(l10n.actionDelete,
+                style: const TextStyle(
                     color: AppColors.danger, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -303,8 +307,8 @@ class _SessionTile extends StatelessWidget {
     if (!context.mounted) return;
     showAppSnack(
       context,
-      'Sesión «${removed.name}» eliminada',
-      actionLabel: 'DESHACER',
+      l10n.sessionDeleted(removed.name),
+      actionLabel: l10n.actionUndo,
       onAction: () async {
         await library.saveSession(removed);
         tone.reattach(removed);

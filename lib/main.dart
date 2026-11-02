@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
+import 'l10n/l10n.dart';
 import 'providers/tone_generator_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/settings_provider.dart';
@@ -34,26 +35,41 @@ class ToneGeneratorApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ToneGeneratorProvider()..init()),
         ChangeNotifierProvider(create: (_) => SessionProvider()..loadSessions()),
       ],
-      child: MaterialApp(
-        title: 'Tone Generator',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF0D0D1A),
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF6C63FF),
-            secondary: Color(0xFF00D2FF),
-            surface: Color(0xFF1A1A2E),
-          ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF1A1A2E),
-            elevation: 0,
-          ),
-          useMaterial3: true,
-        ),
-        home: const DisclaimerGate(child: ToneGeneratorScreen()),
+      child: Builder(
+        builder: (context) {
+          final locale =
+              context.select<SettingsProvider, Locale?>((s) => s.locale);
+          return MaterialApp(
+            onGenerateTitle: (context) => context.l10n.appTitle,
+            locale: locale,
+            supportedLocales: kSupportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localeListResolutionCallback: (deviceLocales, _) =>
+                resolveAppLocale(deviceLocales),
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF0D0D1A),
+              colorScheme: const ColorScheme.dark(
+                primary: Color(0xFF6C63FF),
+                secondary: Color(0xFF00D2FF),
+                surface: Color(0xFF1A1A2E),
+              ),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFF1A1A2E),
+                elevation: 0,
+              ),
+              useMaterial3: true,
+            ),
+            builder: (context, child) {
+              // Keep the context-free accessor in sync with the active locale.
+              L10n.current = context.l10n;
+              return child!;
+            },
+            home: const DisclaimerGate(child: ToneGeneratorScreen()),
+          );
+        },
       ),
     );
   }
 }
-

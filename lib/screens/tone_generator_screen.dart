@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n.dart';
 import '../providers/tone_generator_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/session_provider.dart';
@@ -58,18 +59,18 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
 
   Future<void> _receiveShare(String shareId) async {
     final messenger = ScaffoldMessenger.of(context);
-    messenger.showSnackBar(const SnackBar(
+    messenger.showSnackBar(SnackBar(
       backgroundColor: AppColors.surfaceHigh,
-      duration: Duration(seconds: 20),
+      duration: const Duration(seconds: 20),
       content: Row(children: [
-        SizedBox(
+        const SizedBox(
           width: 20,
           height: 20,
           child: CircularProgressIndicator(
               strokeWidth: 2, color: AppColors.textPrimary),
         ),
-        SizedBox(width: 12),
-        Text('Abriendo sesión compartida…'),
+        const SizedBox(width: 12),
+        Text(context.l10n.shareOpening),
       ]),
     ));
 
@@ -77,8 +78,7 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
     if (!mounted) return;
     messenger.hideCurrentSnackBar();
     if (bundle == null) {
-      showAppSnack(context, 'El link compartido no es válido o expiró.',
-          error: true);
+      showAppSnack(context, context.l10n.shareInvalidLink, error: true);
       return;
     }
 
@@ -90,8 +90,7 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
     } catch (e) {
       debugPrint('Share import error: $e');
       if (mounted) {
-        showAppSnack(context, 'No se pudo importar la sesión compartida.',
-            error: true);
+        showAppSnack(context, context.l10n.shareImportFailed, error: true);
       }
       return;
     }
@@ -105,38 +104,39 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
     if (!mounted) return;
     final opened = await openSession(context, result.session);
     if (opened && mounted) {
-      showAppSnack(context,
-          'Sesión «${result.session.name}» cargada. Revisá el volumen y dale Play.');
+      showAppSnack(
+          context, context.l10n.shareSessionLoaded(result.session.name));
     }
   }
 
   /// "Added to your library — open now?" dialog.
   Future<bool?> _askOpenImported(ShareImportResult r) {
+    final l10n = context.l10n;
     final status = r.alreadyInLibrary
-        ? 'Ya estaba en tu biblioteca.'
-        : 'Se agregó a tu biblioteca (${r.session.summaryLabel}).';
+        ? l10n.shareAlreadyInLibrary
+        : l10n.shareAddedToLibrary(r.session.summaryLabel);
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         icon: const Icon(Icons.library_music_rounded,
             color: AppColors.primary),
-        title: const Text('Sesión recibida'),
+        title: Text(l10n.shareReceivedTitle),
         content: Text(
-          '«${r.session.name}»\n$status\n\n¿Querés abrirla ahora?',
+          l10n.shareReceivedBody(r.session.name, status),
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('SOLO GUARDAR',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(l10n.actionSaveOnly,
+                style: const TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('ABRIR',
-                style: TextStyle(
+            child: Text(l10n.actionOpen,
+                style: const TextStyle(
                     color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -154,6 +154,7 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
   Widget build(BuildContext context) {
     return Consumer2<ToneGeneratorProvider, SettingsProvider>(
       builder: (context, provider, settings, _) {
+        final l10n = context.l10n;
         return Scaffold(
           body: Column(
             children: [
@@ -172,14 +173,14 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
                       actions: [
                         IconButton(
                           icon: const Icon(Icons.save_outlined, size: 22),
-                          tooltip: 'Guardar sesión',
+                          tooltip: l10n.tooltipSaveSession,
                           onPressed: provider.isDirty
                               ? () => saveCurrentSession(context)
                               : null,
                         ),
                         IconButton(
                           icon: const Icon(Icons.share_outlined, size: 22),
-                          tooltip: 'Compartir sesión',
+                          tooltip: l10n.shareSessionTitle,
                           onPressed: provider.channels.isEmpty
                               ? null
                               : () => shareCurrentSession(context),
@@ -187,34 +188,34 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
                         IconButton(
                           icon: const Icon(Icons.library_music_outlined,
                               size: 22),
-                          tooltip: 'Biblioteca',
+                          tooltip: l10n.libraryTitle,
                           onPressed: () => _openLibrary(context),
                         ),
                         PopupMenuButton<_MenuAction>(
-                          tooltip: 'Más opciones',
+                          tooltip: l10n.tooltipMoreOptions,
                           color: AppColors.surfaceHigh,
                           onSelected: (a) => _onMenu(context, a),
                           itemBuilder: (_) => [
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: _MenuAction.saveAs,
                               child: _MenuRow(
-                                  Icons.save_as_outlined, 'Guardar como…'),
+                                  Icons.save_as_outlined, l10n.menuSaveAs),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: _MenuAction.newSession,
                               child: _MenuRow(Icons.add_box_outlined,
-                                  'Nueva sesión'),
+                                  l10n.menuNewSession),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: _MenuAction.library,
                               child: _MenuRow(Icons.library_music_outlined,
-                                  'Biblioteca'),
+                                  l10n.libraryTitle),
                             ),
                             const PopupMenuDivider(),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: _MenuAction.settings,
                               child: _MenuRow(
-                                  Icons.settings_outlined, 'Ajustes'),
+                                  Icons.settings_outlined, l10n.settingsTitle),
                             ),
                           ],
                         ),
@@ -238,7 +239,7 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
                                   color: Colors.white.withOpacity(0.15)),
                               const SizedBox(height: 16),
                               Text(
-                                'Agregá un canal para comenzar',
+                                l10n.emptyChannelsHint,
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.4),
                                   fontSize: 16,
@@ -248,7 +249,7 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
                               ElevatedButton.icon(
                                 onPressed: () => provider.addChannel(),
                                 icon: const Icon(Icons.add),
-                                label: const Text('Agregar Canal'),
+                                label: Text(l10n.addChannel),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF6C63FF),
                                   foregroundColor: Colors.white,
@@ -310,7 +311,7 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
                                       color: const Color(0xFF6C63FF).withOpacity(0.7)),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'Agregar Canal',
+                                    l10n.addChannel,
                                     style: TextStyle(
                                       color: const Color(0xFF6C63FF).withOpacity(0.7),
                                       fontSize: 13,
@@ -376,7 +377,9 @@ class _SessionTitle extends StatelessWidget {
     final dirty = provider.isDirty;
     final saved = provider.activeSessionId != null;
     return Tooltip(
-      message: saved ? 'Renombrar sesión' : 'Guardar sesión',
+      message: saved
+          ? context.l10n.renameSessionTitle
+          : context.l10n.tooltipSaveSession,
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
         onTap: () => renameCurrentSession(context),
@@ -386,7 +389,7 @@ class _SessionTitle extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'TONE GENERATOR',
+                context.l10n.appTitle.toUpperCase(),
                 style: TextStyle(
                   fontSize: 10,
                   letterSpacing: 2,
@@ -477,7 +480,7 @@ class _MasterControlsBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Master Volume',
+                  context.l10n.masterVolume,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.5),
                     fontSize: 11,

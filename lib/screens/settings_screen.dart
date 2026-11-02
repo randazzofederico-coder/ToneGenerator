@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../l10n/l10n.dart';
 import '../providers/settings_provider.dart';
+
+const _forumUrl = 'https://federicorandazzo.com.ar/foro/';
+const _appsUrl = 'https://federicorandazzo.com.ar/apps/';
+
+Future<void> _openUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Consumer<SettingsProvider>(
       builder: (context, settings, _) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text(
-              'Ajustes',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
+            title: Text(
+              l10n.settingsTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
             ),
             centerTitle: true,
             backgroundColor: const Color(0xFF1A1A2E),
@@ -22,17 +34,18 @@ class SettingsScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             children: [
+              // --- LANGUAGE ---
+              _SectionHeader(title: l10n.settingsLanguageTitle),
+              const SizedBox(height: 12),
+              _Card(child: _LanguageSelector(settings: settings)),
+
+              const SizedBox(height: 32),
+
               // --- INTERFACE SIZE ---
-              _SectionHeader(title: 'Interfaz'),
+              _SectionHeader(title: l10n.settingsInterfaceSection),
               const SizedBox(height: 12),
 
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: const Color(0xFF1A1A2E),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                ),
+              _Card(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -41,9 +54,9 @@ class SettingsScreen extends StatelessWidget {
                         Icon(Icons.text_fields,
                             size: 18, color: Colors.white.withValues(alpha: 0.4)),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Tamaño de interfaz',
-                          style: TextStyle(
+                        Text(
+                          l10n.settingsUiScaleTitle,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
@@ -94,18 +107,9 @@ class SettingsScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Compacto',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white.withValues(alpha: 0.25))),
-                          Text('Normal',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white.withValues(alpha: 0.25))),
-                          Text('Grande',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white.withValues(alpha: 0.25))),
+                          _ScaleHint(l10n.scaleCompact),
+                          _ScaleHint(l10n.scaleNormal),
+                          _ScaleHint(l10n.scaleLarge),
                         ],
                       ),
                     ),
@@ -115,22 +119,68 @@ class SettingsScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // --- ABOUT ---
-              _SectionHeader(title: 'Acerca de'),
+              // --- COMMUNITY / FORUM ---
+              _SectionHeader(title: l10n.settingsForumTitle),
               const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: const Color(0xFF1A1A2E),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                ),
+              _Card(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Tone Generator',
-                      style: TextStyle(
+                    Row(
+                      children: [
+                        Icon(Icons.forum_rounded,
+                            size: 18, color: Colors.white.withValues(alpha: 0.4)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n.settingsForumSubtitle,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.6),
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openUrl(_forumUrl),
+                        icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                        label: Text(
+                          l10n.settingsForumButton,
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6C63FF),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // --- ABOUT ---
+              _SectionHeader(title: l10n.settingsAboutTitle),
+              const SizedBox(height: 12),
+              _Card(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.appTitle,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -138,8 +188,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Generador de frecuencias multi-canal\n'
-                      'con síntesis de ondas en tiempo real.',
+                      l10n.settingsAboutDescription,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.4),
                         fontSize: 12,
@@ -158,12 +207,7 @@ class SettingsScreen extends StatelessWidget {
                     Divider(color: Colors.white.withValues(alpha: 0.06)),
                     const SizedBox(height: 12),
                     InkWell(
-                      onTap: () async {
-                        final uri = Uri.parse('https://federicorandazzo.com.ar/apps/');
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
-                        }
-                      },
+                      onTap: () => _openUrl(_appsUrl),
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -171,10 +215,10 @@ class SettingsScreen extends StatelessWidget {
                           children: [
                             const Icon(Icons.launch, size: 16, color: Color(0xFF6C63FF)),
                             const SizedBox(width: 8),
-                            const Expanded(
+                            Expanded(
                               child: Text(
-                                'Visitar federicorandazzo.com.ar/apps/',
-                                style: TextStyle(
+                                l10n.settingsAboutVisitWebsite,
+                                style: const TextStyle(
                                   color: Color(0xFF6C63FF),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -196,7 +240,7 @@ class SettingsScreen extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () => _showDisclaimer(context),
                   icon: const Icon(Icons.warning_amber_rounded, size: 18),
-                  label: const Text('Ver advertencia de seguridad'),
+                  label: Text(l10n.settingsShowSafetyWarning),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.white.withValues(alpha: 0.4),
                   ),
@@ -212,28 +256,26 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showDisclaimer(BuildContext context) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A2E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded,
+            const Icon(Icons.warning_amber_rounded,
                 color: Color(0xFFE94560), size: 24),
-            SizedBox(width: 8),
-            Text('Advertencia',
-                style: TextStyle(
+            const SizedBox(width: 8),
+            Text(l10n.warningTitle,
+                style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w600)),
           ],
         ),
         content: Text(
-          'Podés dañar tu audición o tus parlantes si reproducís tonos a '
-          'volúmenes extremos.\n\n'
-          'Encontrá un nivel cómodo a 1.000 Hz y no lo superes demasiado, '
-          'especialmente en frecuencias agudas.',
+          l10n.warningShortBody,
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.6),
             fontSize: 13,
@@ -243,13 +285,109 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Entendido',
-                style: TextStyle(
+            child: Text(l10n.warningGotIt,
+                style: const TextStyle(
                     color: Color(0xFF6C63FF), fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
+  }
+}
+
+/// Language picker: system language (default), Español or English.
+class _LanguageSelector extends StatelessWidget {
+  final SettingsProvider settings;
+  const _LanguageSelector({required this.settings});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.translate_rounded,
+                size: 18, color: Colors.white.withValues(alpha: 0.4)),
+            const SizedBox(width: 8),
+            Text(
+              l10n.settingsLanguageSubtitle,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        DropdownButtonFormField<String?>(
+          initialValue: settings.languageCode,
+          dropdownColor: const Color(0xFF1A1A2E),
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide:
+                  BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF6C63FF)),
+            ),
+          ),
+          items: [
+            DropdownMenuItem<String?>(
+              value: null,
+              child: Text(l10n.languageSystem),
+            ),
+            DropdownMenuItem<String?>(
+              value: 'es',
+              child: Text(l10n.languageSpanish),
+            ),
+            DropdownMenuItem<String?>(
+              value: 'en',
+              child: Text(l10n.languageEnglish),
+            ),
+          ],
+          onChanged: (code) => settings.setLanguage(code),
+        ),
+      ],
+    );
+  }
+}
+
+class _Card extends StatelessWidget {
+  final Widget child;
+  const _Card({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF1A1A2E),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ScaleHint extends StatelessWidget {
+  final String text;
+  const _ScaleHint(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text,
+        style: TextStyle(
+            fontSize: 10, color: Colors.white.withValues(alpha: 0.25)));
   }
 }
 

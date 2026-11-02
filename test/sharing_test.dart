@@ -1,6 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:tone_generator/l10n/l10n.dart';
 import 'package:tone_generator/models/channel_model.dart';
 import 'package:tone_generator/models/tone_session.dart';
 import 'package:tone_generator/providers/session_provider.dart';
@@ -26,6 +28,9 @@ ToneSession _sample({String id = 'orig-1', String name = 'Afinación'}) {
 }
 
 void main() {
+  // Context-free strings (default names, summaries) in Spanish, as asserted below.
+  setUpAll(() => L10n.current = lookupAppLocalizations(const Locale('es')));
+
   group('ToneChannel.fromJson', () {
     test('clamps out-of-range and wrong-typed values', () {
       final ch = ToneChannel.fromJson('x', {

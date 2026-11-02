@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/l10n.dart';
 import '../models/channel_model.dart';
 import '../providers/tone_generator_provider.dart';
 
@@ -137,7 +138,7 @@ class _ChannelSelectorBar extends StatelessWidget {
           Icon(Icons.piano, size: 16, color: Colors.white.withOpacity(0.3)),
           const SizedBox(width: 8),
           Text(
-            'Canal:',
+            context.l10n.pianoChannelLabel,
             style: TextStyle(
               fontSize: 11,
               color: Colors.white.withOpacity(0.4),

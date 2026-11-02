@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
+import '../l10n/l10n.dart';
 import '../models/tone_session.dart';
 import '../providers/session_provider.dart';
 import '../providers/tone_generator_provider.dart';
@@ -41,10 +42,11 @@ Future<String?> askSessionName(
   BuildContext context, {
   required String title,
   String initial = '',
-  String confirmLabel = 'GUARDAR',
+  String? confirmLabel,
   String? exceptId,
 }) {
   final library = context.read<SessionProvider>();
+  final l10n = context.l10n;
   final controller = TextEditingController(text: initial)
     ..selection = TextSelection(baseOffset: 0, extentOffset: initial.length);
   String? error;
@@ -56,11 +58,11 @@ Future<String?> askSessionName(
         void submit() {
           final name = controller.text.trim();
           if (name.isEmpty) {
-            setState(() => error = 'Escribí un nombre');
+            setState(() => error = l10n.sessionNameRequired);
             return;
           }
           if (library.nameExists(name, exceptId: exceptId)) {
-            setState(() => error = 'Ya existe una sesión con ese nombre');
+            setState(() => error = l10n.sessionNameExists);
             return;
           }
           Navigator.pop(ctx, name);
@@ -75,7 +77,7 @@ Future<String?> askSessionName(
             maxLength: ToneSession.maxNameLength,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-              hintText: 'Nombre de la sesión',
+              hintText: l10n.sessionNameHint,
               errorText: error,
             ),
             onChanged: (_) {
@@ -86,12 +88,12 @@ Future<String?> askSessionName(
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('CANCELAR',
-                  style: TextStyle(color: AppColors.textSecondary)),
+              child: Text(l10n.actionCancel,
+                  style: const TextStyle(color: AppColors.textSecondary)),
             ),
             TextButton(
               onPressed: submit,
-              child: Text(confirmLabel,
+              child: Text(confirmLabel ?? l10n.actionSave,
                   style: const TextStyle(
                       color: AppColors.primary, fontWeight: FontWeight.bold)),
             ),
@@ -123,10 +125,11 @@ Future<bool> saveCurrentSession(BuildContext context,
   tone.markSaved(updated);
 
   if (context.mounted) {
+    final l10n = context.l10n;
     showAppSnack(
       context,
-      'Sesión «${updated.name}» guardada',
-      actionLabel: offerUndo ? 'DESHACER' : null,
+      l10n.sessionSaved(updated.name),
+      actionLabel: offerUndo ? l10n.actionUndo : null,
       onAction: offerUndo
           ? () async {
               await library.saveSession(previous);
@@ -149,7 +152,7 @@ Future<bool> saveCurrentSessionAs(BuildContext context) async {
 
   final name = await askSessionName(
     context,
-    title: 'Guardar sesión como…',
+    title: context.l10n.saveSessionAsTitle,
     initial: tone.activeSessionName ?? '',
   );
   if (name == null) return false;
@@ -157,7 +160,9 @@ Future<bool> saveCurrentSessionAs(BuildContext context) async {
   final session = tone.captureSession(id: _newId(), name: name);
   await library.saveSession(session);
   tone.markSaved(session);
-  if (context.mounted) showAppSnack(context, 'Sesión «$name» guardada');
+  if (context.mounted) {
+    showAppSnack(context, context.l10n.sessionSaved(name));
+  }
   return true;
 }
 
@@ -169,29 +174,30 @@ Future<bool> protectUnsavedChanges(BuildContext context) async {
   final tone = context.read<ToneGeneratorProvider>();
   if (!tone.isDirty) return true;
 
+  final l10n = context.l10n;
   final choice = await showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: AppColors.surface,
-      title: const Text('Cambios sin guardar'),
+      title: Text(l10n.unsavedChangesTitle),
       content: Text(tone.activeSessionId == null
-          ? 'La sesión actual no está guardada. ¿Qué querés hacer antes de continuar?'
-          : 'La sesión «${tone.displayName}» tiene cambios sin guardar. ¿Qué querés hacer antes de continuar?'),
+          ? l10n.unsavedChangesNew
+          : l10n.unsavedChangesNamed(tone.displayName)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, 'cancel'),
-          child: const Text('CANCELAR',
-              style: TextStyle(color: AppColors.textSecondary)),
+          child: Text(l10n.actionCancel,
+              style: const TextStyle(color: AppColors.textSecondary)),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, 'discard'),
-          child: const Text('DESCARTAR',
-              style: TextStyle(color: AppColors.danger)),
+          child: Text(l10n.actionDiscard,
+              style: const TextStyle(color: AppColors.danger)),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, 'save'),
-          child: const Text('GUARDAR',
-              style: TextStyle(
+          child: Text(l10n.actionSave,
+              style: const TextStyle(
                   color: AppColors.success, fontWeight: FontWeight.bold)),
         ),
       ],
@@ -242,9 +248,9 @@ Future<void> renameCurrentSession(BuildContext context) async {
 
   final name = await askSessionName(
     context,
-    title: 'Renombrar sesión',
+    title: context.l10n.renameSessionTitle,
     initial: stored.name,
-    confirmLabel: 'RENOMBRAR',
+    confirmLabel: context.l10n.actionRename,
     exceptId: stored.id,
   );
   if (name == null || name == stored.name) return;
@@ -259,8 +265,8 @@ void removeChannelWithUndo(BuildContext context, String channelId) {
   if (removed == null) return;
   showAppSnack(
     context,
-    'Canal eliminado',
-    actionLabel: 'DESHACER',
+    context.l10n.channelDeleted,
+    actionLabel: context.l10n.actionUndo,
     onAction: () => tone.restoreChannel(
         removed.channel, removed.index, removed.generation),
   );
@@ -273,7 +279,7 @@ void shareSession(BuildContext context, ToneSession session,
     {String? note}) {
   showShareSheet(
     context,
-    heading: 'Compartir sesión',
+    heading: context.l10n.shareSessionTitle,
     subtitle: '«${session.name}» · ${session.summaryLabel}'
         '${note != null ? '\n$note' : ''}',
     createLink: () => DeepLinkService().createSessionLink(session),
@@ -285,7 +291,7 @@ void shareSession(BuildContext context, ToneSession session,
 Future<void> shareCurrentSession(BuildContext context) async {
   final tone = context.read<ToneGeneratorProvider>();
   if (tone.channels.isEmpty) {
-    showAppSnack(context, 'Agregá al menos un canal para compartir.');
+    showAppSnack(context, context.l10n.shareAddChannelFirst);
     return;
   }
   if (tone.activeSessionId == null) {
@@ -298,6 +304,6 @@ Future<void> shareCurrentSession(BuildContext context) async {
   shareSession(
     context,
     tone.captureSession(createdAt: stored?.createdAt),
-    note: dirty ? 'Incluye los cambios sin guardar.' : null,
+    note: dirty ? context.l10n.shareIncludesUnsaved : null,
   );
 }

@@ -2,13 +2,16 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n.dart';
 import '../models/channel_model.dart';
 import '../providers/tone_generator_provider.dart';
 import '../services/session_actions.dart';
 import '../theme/ui_scale.dart';
 import 'mini_knob.dart';
 
-const _waveformLabels = ['Senoidal', 'Cuadrada', 'Triangular', 'Sierra'];
+/// Waveform names, in [Waveform] order.
+List<String> _waveformLabels(AppLocalizations l10n) =>
+    [l10n.waveSine, l10n.waveSquare, l10n.waveTriangle, l10n.waveSawtooth];
 
 // ════════════════════════════════════════════════════════════════
 //  ChannelCard — single unified layout
@@ -456,7 +459,7 @@ class _FrequencyDisplayState extends State<_FrequencyDisplay> {
         backgroundColor: const Color(0xFF1A1A2E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         title: Text(
-          'Frecuencia (Hz)',
+          context.l10n.frequencyDialogTitle,
           style: TextStyle(
             color: color,
             fontSize: 16,
@@ -489,7 +492,7 @@ class _FrequencyDisplayState extends State<_FrequencyDisplay> {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
-              'Cancelar',
+              context.l10n.dialogCancel,
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
             ),
           ),
@@ -499,7 +502,7 @@ class _FrequencyDisplayState extends State<_FrequencyDisplay> {
               Navigator.of(ctx).pop();
             },
             child: Text(
-              'OK',
+              context.l10n.dialogOk,
               style: TextStyle(color: color, fontWeight: FontWeight.w700),
             ),
           ),
@@ -552,6 +555,7 @@ class _WaveformDropdown extends StatelessWidget {
         ),
       ),
       itemBuilder: (_) => List.generate(Waveform.values.length, (i) {
+        final labels = _waveformLabels(context.l10n);
         final wf = Waveform.values[i];
         final isActive = wf == waveform;
         return PopupMenuItem(
@@ -566,7 +570,7 @@ class _WaveformDropdown extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                _waveformLabels[i],
+                labels[i],
                 style: TextStyle(
                   color: isActive ? const Color(0xFF6C63FF) : Colors.white70,
                   fontSize: 13,

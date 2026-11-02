@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../l10n/l10n.dart';
 import '../services/deep_link_service.dart';
 import '../theme/app_colors.dart';
 
@@ -80,7 +81,7 @@ class _ShareSheetState extends State<_ShareSheet> {
       ));
     } catch (_) {
       await _copy(link,
-          info: 'No se pudo abrir el menú de compartir. Copiamos el link.');
+          info: context.l10n.shareNativeFailed);
     }
   }
 
@@ -120,19 +121,19 @@ class _ShareSheetState extends State<_ShareSheet> {
               future: _future,
               builder: (context, snap) {
                 if (snap.connectionState != ConnectionState.done) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Column(
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 28,
                           height: 28,
                           child: CircularProgressIndicator(
                               strokeWidth: 2.5, color: accent),
                         ),
-                        SizedBox(height: 12),
-                        Text('Generando link…',
-                            style: TextStyle(color: textSecondary)),
+                        const SizedBox(height: 12),
+                        Text(context.l10n.shareGeneratingLink,
+                            style: const TextStyle(color: textSecondary)),
                       ],
                     ),
                   );
@@ -141,7 +142,7 @@ class _ShareSheetState extends State<_ShareSheet> {
                 if (snap.hasError) {
                   final msg = snap.error is ShareException
                       ? snap.error.toString()
-                      : 'No se pudo crear el link.';
+                      : context.l10n.shareLinkFailed;
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -157,7 +158,7 @@ class _ShareSheetState extends State<_ShareSheet> {
                       OutlinedButton.icon(
                         onPressed: _retry,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('REINTENTAR'),
+                        label: Text(context.l10n.actionRetry),
                       ),
                     ],
                   );
@@ -193,14 +194,16 @@ class _ShareSheetState extends State<_ShareSheet> {
                             backgroundColor: AppColors.primary),
                         onPressed: () => _nativeShare(link),
                         icon: const Icon(Icons.ios_share),
-                        label: const Text('COMPARTIR EN…'),
+                        label: Text(context.l10n.shareVia),
                       ),
                       const SizedBox(height: 10),
                     ],
                     OutlinedButton.icon(
                       onPressed: () => _copy(link),
                       icon: Icon(_copied ? Icons.check : Icons.copy_rounded),
-                      label: Text(_copied ? '¡LINK COPIADO!' : 'COPIAR LINK'),
+                      label: Text(_copied
+                          ? context.l10n.shareLinkCopied
+                          : context.l10n.shareCopyLink),
                     ),
                     if (_info != null) ...[
                       const SizedBox(height: 10),

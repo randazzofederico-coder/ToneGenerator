@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 
+import '../l10n/l10n.dart';
 import 'channel_model.dart';
 
 /// A saved Tone Generator setup: its channels and the master volume.
@@ -62,9 +63,8 @@ class ToneSession {
     return seen.toList();
   }
 
-  /// Short human description, e.g. "3 canales".
-  String get summaryLabel =>
-      channels.length == 1 ? '1 canal' : '${channels.length} canales';
+  /// Short human description, e.g. "3 canales" / "3 channels".
+  String get summaryLabel => L10n.current.channelCount(channels.length);
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -91,7 +91,7 @@ class ToneSession {
 
     final rawName = json['name'];
     var name = (rawName is String) ? rawName.trim() : '';
-    if (name.isEmpty) name = 'Sesión';
+    if (name.isEmpty) name = L10n.current.sessionDefaultName;
     if (name.length > maxNameLength) name = name.substring(0, maxNameLength);
 
     final vol = json['masterVol'];

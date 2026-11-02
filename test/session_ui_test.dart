@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:tone_generator/l10n/l10n.dart';
 import 'package:tone_generator/providers/session_provider.dart';
 import 'package:tone_generator/providers/tone_generator_provider.dart';
 import 'package:tone_generator/services/session_actions.dart';
@@ -86,6 +87,9 @@ void main() {
             ChangeNotifierProvider.value(value: library),
           ],
           child: MaterialApp(
+            locale: const Locale('es'),
+            supportedLocales: kSupportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
             home: Scaffold(
               body: Builder(
                 builder: (context) => Center(

@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../l10n/l10n.dart';
 import '../models/tone_session.dart';
 
 // Conditional import: web reads/cleans the browser URL, stub is a no-op.
@@ -171,8 +172,7 @@ class DeepLinkService {
       return cred.user!;
     } on FirebaseAuthException catch (e) {
       debugPrint('DeepLinkService anonymous sign-in failed: ${e.code}');
-      throw const ShareException(
-          'No se pudo conectar con el servidor para crear el link.');
+      throw ShareException(L10n.current.shareErrorServer);
     }
   }
 
@@ -249,8 +249,8 @@ class DeepLinkService {
     } on FirebaseException catch (e) {
       debugPrint('DeepLinkService.createSessionLink ${e.code}: ${e.message}');
       throw ShareException(e.code == 'permission-denied'
-          ? 'El servidor rechazó el link (permisos).'
-          : 'No se pudo crear el link. Revisá tu conexión.');
+          ? L10n.current.shareErrorPermission
+          : L10n.current.shareErrorConnection);
     }
 
     final slug = slugify(session.name);
@@ -264,9 +264,9 @@ class DeepLinkService {
     return SharedLink(
       id: shareId,
       url: url,
-      title: 'Sesión: ${session.name}',
-      message:
-          '🎛️ Te comparto la sesión «${session.name}» (${session.summaryLabel}) en Tone Generator:\n$url',
+      title: L10n.current.shareLinkTitle(session.name),
+      message: L10n.current
+          .shareLinkMessage(session.name, session.summaryLabel, url),
     );
   }
 
