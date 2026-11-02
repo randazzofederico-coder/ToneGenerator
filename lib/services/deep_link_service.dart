@@ -222,7 +222,9 @@ class DeepLinkService {
   /// Creates (or reuses) the link for [session].
   Future<SharedLink> createSessionLink(ToneSession session) async {
     final user = await _ensureUser();
-    final payload = {'data': session.toJson()};
+    // Sync fields (rev, dev...) are local metadata: kept out of the payload,
+    // which also keeps content IDs identical to pre-sync links.
+    final payload = {'data': session.toJson(includeSync: false)};
     final shareId = contentId(user.uid, payload);
     final ref = FirebaseFirestore.instance.collection(collection).doc(shareId);
 

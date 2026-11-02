@@ -61,6 +61,7 @@ Aplicación profesional para generar tonos de prueba, calibrar equipos de audio,
 - **Biblioteca** (`screens/library_screen.dart`) — búsqueda por nombre; tocar = abrir; menú ⋮: abrir, compartir, duplicar, renombrar, eliminar (confirmación + *DESHACER*). La sesión abierta se marca *Abierta*
 - **Estado de trabajo persistente** — lo que está cargado se guarda solo (SharedPreferences, `tone_working_state`) y se restaura al reabrir la app
 - **Nunca suena sola** — abrir una sesión (propia o recibida) detiene la reproducción; hay que dar Play
+- **Modelo de datos (listo para sync)** — la biblioteca se guarda en SharedPreferences (`tone_sessions`, lista JSON de `ToneSession`). Además de sus datos, cada sesión lleva los campos del contrato `SyncFields` de `fede_apps_core`: `rev` (1 al crear/duplicar/importar; +1 en cada cambio: guardar, renombrar, eliminar, deshacer), `updatedAt`, `dev` (`DeviceIdentity.id`) y, al eliminar, `deleted`/`deletedAt`. **Eliminar deja una lápida** invisible para la app (lista, búsqueda, nombres repetidos, sesión abierta); las lápidas se purgan al cargar, a los 30 días. Guardar sobre una lápida (*DESHACER*, reabrir un link importado y luego borrado) la revive con un `rev` mayor. JSON viejo sin estas claves se lee como `rev: 1`. Los links compartidos no incluyen estos campos
 
 ### 🔗 Compartir sesiones (Deep Links)
 Mismo diseño que el Metrónomo, en una colección propia.

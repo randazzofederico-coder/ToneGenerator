@@ -1,3 +1,4 @@
+import 'package:fede_apps_core/fede_apps_core.dart' show SyncFields;
 import 'package:uuid/uuid.dart';
 
 import '../l10n/l10n.dart';
@@ -20,6 +21,18 @@ class ToneSession {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // ── Sync fields (contract: fede_apps_core `SyncFields`) ──
+  /// Revision: 1 on creation, +1 on every change (save, rename, delete...).
+  final int rev;
+
+  /// Tombstone: deleted from the library but kept (until purged) so a future
+  /// sync can propagate the deletion. Never shown in the UI.
+  final bool deleted;
+  final DateTime? deletedAt;
+
+  /// `DeviceIdentity.id` of the installation that made the last change.
+  final String? device;
+
   const ToneSession({
     required this.id,
     required this.name,
@@ -27,6 +40,10 @@ class ToneSession {
     required this.masterVolume,
     required this.createdAt,
     required this.updatedAt,
+    this.rev = 1,
+    this.deleted = false,
+    this.deletedAt,
+    this.device,
   });
 
   static const _uuid = Uuid();
@@ -66,14 +83,23 @@ class ToneSession {
   /// Short human description, e.g. "3 canales" / "3 channels".
   String get summaryLabel => L10n.current.channelCount(channels.length);
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'channels': channels,
-        'masterVol': masterVolume,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+  /// JSON for storage. With [includeSync] false (shared links) the sync
+  /// fields (`rev`, `deleted`, `deletedAt`, `dev`) are left out.
+  Map<String, dynamic> toJson({bool includeSync = true}) {
+    final json = <String, dynamic>{
+      'id': id,
+      'name': name,
+      'channels': channels,
+      'masterVol': masterVolume,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+    if (includeSync) {
+      SyncFields.write(json,
+          rev: rev, deleted: deleted, deletedAt: deletedAt, device: device);
+    }
+    return json;
+  }
 
   /// Defensive parser: the JSON may come from a shared link.
   factory ToneSession.fromJson(Map<String, dynamic> json) {
@@ -109,9 +135,16 @@ class ToneSession {
       masterVolume: master.clamp(0.0, 1.0).toDouble(),
       createdAt: date(json['createdAt']),
       updatedAt: date(json['updatedAt']),
+      // Old JSON (without these keys) → rev 1, not deleted.
+      rev: SyncFields.readRev(json),
+      deleted: SyncFields.readDeleted(json),
+      deletedAt: SyncFields.readDeletedAt(json),
+      device: SyncFields.readDevice(json),
     );
   }
 
+  /// Copies data fields; sync fields are kept as they are (use [revised] /
+  /// [tombstoned] to change them).
   ToneSession copyWith({
     String? id,
     String? name,
@@ -127,6 +160,45 @@ class ToneSession {
       masterVolume: masterVolume ?? this.masterVolume,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      rev: rev,
+      deleted: deleted,
+      deletedAt: deletedAt,
+      device: device,
+    );
+  }
+
+  /// Same data stamped as a live revision: [rev], `updatedAt = now`,
+  /// [device], not deleted.
+  ToneSession revised({
+    required int rev,
+    required DateTime now,
+    String? device,
+  }) {
+    return ToneSession(
+      id: id,
+      name: name,
+      channels: channels,
+      masterVolume: masterVolume,
+      createdAt: createdAt,
+      updatedAt: now,
+      rev: rev,
+      device: device,
+    );
+  }
+
+  /// Tombstone of this session: `rev + 1`, `deleted`, `deletedAt = now`.
+  ToneSession tombstoned({required DateTime now, String? device}) {
+    return ToneSession(
+      id: id,
+      name: name,
+      channels: channels,
+      masterVolume: masterVolume,
+      createdAt: createdAt,
+      updatedAt: now,
+      rev: rev + 1,
+      deleted: true,
+      deletedAt: now,
+      device: device,
     );
   }
 }

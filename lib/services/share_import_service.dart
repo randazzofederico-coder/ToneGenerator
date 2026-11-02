@@ -25,6 +25,15 @@ class ShareImportResult {
 ///  * Otherwise the local ID is a UUID v5 derived from `shareId + originalId`,
 ///    so opening the same link again maps to the same local session and
 ///    nothing is duplicated. If the user deleted it, it's re-created.
+///
+/// Sync fields: lookups only see live sessions (tombstones are ignored).
+/// Any `rev`/`deleted`/`dev` in the shared JSON is discarded — the import is
+/// stamped by [SessionProvider.saveSession]: a new item gets `rev 1`; if the
+/// derived ID exists as a tombstone (imported, deleted, link opened again)
+/// it's revived as `tombstone rev + 1`, so a future sync sees the revival as
+/// newer than the deletion. A tombstone of the user's *own* original ID is
+/// not revived: the link is imported as a copy under the derived ID (same as
+/// before tombstones existed, when the deleted session was simply gone).
 class ShareImportService {
   final SessionProvider sessions;
 
@@ -53,13 +62,12 @@ class ShareImportService {
     }
 
     final now = DateTime.now();
-    final imported = shared.copyWith(
+    final imported = await sessions.saveSession(shared.copyWith(
       id: localId,
       name: _uniqueName(shared.name),
       createdAt: now,
       updatedAt: now,
-    );
-    await sessions.saveSession(imported);
+    ));
     return ShareImportResult(session: imported, alreadyInLibrary: false);
   }
 
