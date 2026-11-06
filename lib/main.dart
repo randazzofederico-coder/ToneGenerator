@@ -98,6 +98,15 @@ class ToneGeneratorApp extends StatelessWidget {
                 backgroundColor: Color(0xFF1A1A2E),
                 elevation: 0,
               ),
+              // Snackbars legibles: con el tema oscuro, Material 3 usa por
+              // defecto texto oscuro (onInverseSurface) sobre nuestro fondo
+              // oscuro. Texto blanco en todos (también los del paquete).
+              snackBarTheme: const SnackBarThemeData(
+                backgroundColor: Color(0xFF16213E),
+                contentTextStyle: TextStyle(color: Colors.white, fontSize: 14),
+                actionTextColor: Color(0xFF00D2FF),
+                closeIconColor: Colors.white,
+              ),
               useMaterial3: true,
             ),
             builder: (context, child) {

@@ -72,7 +72,8 @@ class _ToneGeneratorScreenState extends State<ToneGeneratorScreen> {
               strokeWidth: 2, color: AppColors.textPrimary),
         ),
         const SizedBox(width: 12),
-        Text(context.l10n.shareOpening),
+        Text(context.l10n.shareOpening,
+            style: const TextStyle(color: AppColors.textPrimary)),
       ]),
     ));
 

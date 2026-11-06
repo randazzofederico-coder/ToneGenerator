@@ -27,7 +27,8 @@ void showAppSnack(BuildContext context, String message,
   final hasAction = actionLabel != null && onAction != null;
   messenger.hideCurrentSnackBar();
   messenger.showSnackBar(SnackBar(
-    content: Text(message),
+    content: Text(message,
+        style: const TextStyle(color: AppColors.textPrimary)),
     backgroundColor: error ? AppColors.danger : AppColors.surfaceHigh,
     behavior: SnackBarBehavior.floating,
     persist: false,
