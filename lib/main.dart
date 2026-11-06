@@ -112,7 +112,11 @@ class ToneGeneratorApp extends StatelessWidget {
             builder: (context, child) {
               // Keep the context-free accessor in sync with the active locale.
               L10n.current = context.l10n;
-              return child!;
+              // Web en teléfonos: siempre vertical (fede_apps_core).
+              return PortraitOnly(
+                backgroundColor: const Color(0xFF0D0D1A),
+                child: child!,
+              );
             },
             home: const DisclaimerGate(child: ToneGeneratorScreen()),
           );
