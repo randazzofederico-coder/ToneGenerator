@@ -258,7 +258,7 @@ El factor se persiste en SharedPreferences y se aplica reactivamente via `Consum
 - **Android:** SHA-1 (y SHA-256) de las claves **debug**, **upload** y **Play App Signing** registradas en Firebase; tras agregar una, volver a bajar `google-services.json`
 
 > [!IMPORTANT]
-> La config **web** de `firebase_options.dart` usa el **mismo** `apiKey` / `appId` que el sitio (`AIzaSyB-J7F5pH90Zmk5VZ1jdsoPQvrNwPgy_f4` / `1:858245145787:web:9f041f6423348bca05b59e`): Firebase Auth guarda la sesión por `apiKey`, y así la sesión se comparte con federicorandazzo.com.ar y las otras apps web. Si se regenera con `flutterfire configure`, hay que volver a poner esos dos valores en `web`.
+> La config **web** de `firebase_options.dart` usa el **mismo** `apiKey` / `appId` que el sitio (`PUBLIC_FIREBASE_API_KEY (ver .env del sitio)` / `PUBLIC_FIREBASE_APP_ID`): Firebase Auth guarda la sesión por `apiKey`, y así la sesión se comparte con federicorandazzo.com.ar y las otras apps web. Si se regenera con `flutterfire configure`, hay que volver a poner esos dos valores en `web`.
 
 ## Desarrollo
 
