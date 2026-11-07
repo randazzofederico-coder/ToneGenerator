@@ -5,8 +5,21 @@ Generador de frecuencias multi-canal con síntesis de ondas en tiempo real.
 - **Repositorio:** https://github.com/randazzofederico-coder/ToneGenerator
 - **Web:** https://federicorandazzo.com.ar/tone-generator/
 - **Android:** `com.saroo.tone_generator` (Google Play)
+- **Versión actual:** 1.2.0 (`1.2.0+5` en `pubspec.yaml`)
 
 Aplicación profesional para generar tonos de prueba, calibrar equipos de audio, y explorar frecuencias. Soporta múltiples canales simultáneos con control independiente de frecuencia, volumen, paneo y forma de onda.
+
+## Novedades 1.2.0
+
+- **Cuenta del ecosistema (opcional)** — *Continuar con Google* en Ajustes; la misma cuenta del sitio y de las otras apps. Sin cuenta la app funciona igual
+- **Sincronización local-first de la biblioteca** — `LibrarySync` de `fede_apps_core` contra `users/{uid}/appData/tonegenerator`: merge por ítem con `rev` y lápidas, copias *"… (otro dispositivo)"* en conflictos, purga de lápidas a los 30 días
+- **Deshacer restaura el estado exacto** de la sesión (datos y fechas; misma posición en la lista)
+- **Otras apps** — sugerencia ocasional de las otras apps y sección *Más apps* en Ajustes
+- **Medición de uso local** (`UsageTracker`; la reproducción en segundo plano cuenta como uso)
+- **Web en teléfonos siempre vertical** (`PortraitOnly`)
+- **Snackbars legibles** (texto blanco sobre el fondo oscuro)
+- **URL limpia** tras abrir un link compartido (sin `?share=`; un refresco no reimporta)
+- **Eliminado el login heredado** (`AuthGate`): la app es libre
 
 ## Características
 
@@ -40,7 +53,14 @@ Aplicación profesional para generar tonos de prueba, calibrar equipos de audio,
 - **Idioma**: idioma del sistema (por defecto), Español o English
 - **Tamaño de interfaz** configurable (70% – 130%)
 - **Comunidad**: acceso al foro (https://federicorandazzo.com.ar/foro/)
+- **Más apps** (`EcosystemSection` de `fede_apps_core`): links a las otras apps del ecosistema
 - Advertencia de seguridad auditiva
+
+### 🧩 Ecosistema (`fede_apps_core`)
+- **Sugerencia de otras apps** — `EcosystemPrompts.maybeShowAppsPrompt` en momentos tranquilos (al entrar a Ajustes o al detener la reproducción a mano), con límites de frecuencia del paquete; nunca sobre la advertencia de seguridad
+- **Medición de uso local** — `UsageTracker` (se inicializa en `main.dart`; la reproducción cuenta como actividad, también en segundo plano). Nunca bloquea el arranque
+- **Web en teléfonos** — `PortraitOnly` en el `builder` del `MaterialApp`: la pantalla queda siempre vertical
+- **Snackbars** — `snackBarTheme` con texto blanco (también para los avisos del paquete)
 
 ### 🌐 Idiomas
 - Español e inglés con `flutter_localizations` + `intl` (gen-l10n). Textos en `lib/l10n/app_es.arb` (plantilla) y `app_en.arb`
@@ -86,7 +106,7 @@ Mismo diseño que el Metrónomo, en una colección propia.
 - **Importación idempotente** (`services/share_import_service.dart`) — ID local = UUID v5 de `shareId + idOriginal`: reabrir el link no duplica; si es una sesión propia se reutiliza; nombres repetidos reciben sufijo `(2)`
 - **Datos de terceros validados** — `ToneSession.fromJson` / `ToneChannel.fromJson` limitan rangos (1–20.154 Hz, volumen 0–1, paneo ±1), máximo 16 canales y nombre de 80 caracteres
 - **Flujo al abrir** — (disclaimer si es la primera vez) → *Abriendo sesión compartida…* → se agrega a la biblioteca → *¿Abrir ahora?* → protección de cambios → se carga **detenida**
-- **Captura del link** — en `main.dart` antes de `runApp` (web: `?share=` + limpieza con `history.replaceState`; nativo: `app_links`). Con la app abierta: App Links (Android) y `launchQueue` (PWA de escritorio, `web/index.html`)
+- **Captura del link** — en `main.dart` antes de `runApp` (web: `?share=` + limpieza con `history.replaceState`, conservando el `state` de Flutter, y otra vez al terminar la importación — la URL queda en la de la app a secas; nativo: `app_links`). Con la app abierta: App Links (Android) y `launchQueue` (PWA de escritorio, `web/index.html`)
 - **TTL 30 días** — `expiresAt` se renueva en cada apertura; limpieza lazy desde el cliente (plan Spark): hasta 10 vencidos al crear un link y cualquier vencido que se abra
 
 #### Prioridad de apertura de un link
@@ -157,7 +177,7 @@ El motor web utiliza nodos nativos del Web Audio API para lograr cambios de par�
 ```
 lib/
 ├── main.dart                          # Entry point, providers, MaterialApp
-├── firebase_options.dart              # Firebase config
+├── firebase_options.dart              # Firebase config (no versionado)
 ├── l10n/
 │   ├── app_es.arb / app_en.arb        # Textos (español = plantilla)
 │   ├── app_localizations*.dart        # Generado por gen-l10n
@@ -224,13 +244,21 @@ El factor se persiste en SharedPreferences y se aplica reactivamente via `Consum
 | Colección | Campo | Uso |
 |---|---|---|
 | `tone_shared_links/{id}` | ver *Compartir sesiones* | Links compartidos |
+| `users/{uid}/appData/tonegenerator` | `sessions` (vía `LibrarySync`) | Biblioteca sincronizada (reglas en el sitio / `fede_apps_core`) |
 
 ## Requisitos
 
 - Flutter SDK >= 3.10.4
-- Firebase project configurado con Auth (incluido **Anonymous**) + Firestore
-- `lib/firebase_options.dart` y `android/app/google-services.json` no se versionan: copiarlos o regenerarlos con `flutterfire configure`
-- Para Android: SHA-1 y SHA-256 registrados en Firebase
+- **`fede_apps_core`** (cuenta, sync, ecosistema, medición de uso, `PortraitOnly`) — dependencia por path `../fede_apps_core`: para compilar hay que clonar https://github.com/randazzofederico-coder/fede_apps_core **al lado** de este repo (`C:\dev\fede_apps_core`)
+- Firebase project configurado con Auth (Google + **Anonymous**) + Firestore
+
+### Configuración Firebase
+
+- `lib/firebase_options.dart` y `android/app/google-services.json` **no se versionan** (`.gitignore`): copiarlos o regenerarlos con `flutterfire configure`
+- **Android:** SHA-1 (y SHA-256) de las claves **debug**, **upload** y **Play App Signing** registradas en Firebase; tras agregar una, volver a bajar `google-services.json`
+
+> [!IMPORTANT]
+> La config **web** de `firebase_options.dart` usa el **mismo** `apiKey` / `appId` que el sitio (`AIzaSyB-J7F5pH90Zmk5VZ1jdsoPQvrNwPgy_f4` / `1:858245145787:web:9f041f6423348bca05b59e`): Firebase Auth guarda la sesión por `apiKey`, y así la sesión se comparte con federicorandazzo.com.ar y las otras apps web. Si se regenera con `flutterfire configure`, hay que volver a poner esos dos valores en `web`.
 
 ## Desarrollo
 
@@ -242,15 +270,17 @@ flutter run -d chrome
 flutter run
 
 # Tests
-flutter test test/sharing_test.dart test/session_ui_test.dart test/l10n_test.dart
+flutter test test/sharing_test.dart test/session_ui_test.dart test/session_sync_test.dart test/tone_sync_test.dart test/l10n_test.dart
 
 # El motor nativo (C++/FFI) no requiere recompilación para cambios web
 ```
 
-## Build web (deploy en federicorandazzo.com.ar/tone-generator/)
+## Build y deploy web (federicorandazzo.com.ar/tone-generator/)
+
+Lo hace el script del sitio: `mi-web-fede\deploy.ps1`, opción **4 - Tone Generator** (compila, copia `build\web` → `public\tone-generator\` con `robocopy /MIR`, compila Astro y sube). A mano, equivalente:
 
 ```bash
-flutter build web --wasm --base-href /tone-generator/
+flutter build web --wasm --base-href /tone-generator/   # release por defecto
 # copiar build/web/* a mi-web-fede/public/tone-generator/ y correr deploy.ps1
 ```
 
@@ -262,11 +292,11 @@ App Links: `mi-web-fede/public/.well-known/assetlinks.json` incluye `com.saroo.t
 - **Motor de audio** (`packages/native_audio_engine`) — Código compartido con Metrónomo/Afinador. No aplicar "arreglos automáticos" de warnings ahí sin revisar: quitar los valores por defecto de `_WebChannel` (`muted`, `solo`, `phaseInvert`) en `live_mixer_web.dart` rompe el build web
 - **Problemas conocidos (no afectan la app)**
   - `packages/native_audio_engine/example` no encuentra `SoundTouchProcessor` (el ejemplo no se compila con la app)
-  - `test/widget_test.dart` es la plantilla de Flutter (contador) y falla; los tests válidos son `sharing_test.dart`, `session_ui_test.dart` y `l10n_test.dart`
+  - `test/widget_test.dart` es la plantilla de Flutter (contador) y falla; los tests válidos son `sharing_test.dart`, `session_ui_test.dart`, `session_sync_test.dart`, `tone_sync_test.dart` y `l10n_test.dart`
 - **Fin de línea** — `core.autocrlf=true`: los avisos *LF will be replaced by CRLF* de git son normales
 - **Tests de widgets** — Crear `SessionProvider` dentro del cuerpo de cada `testWidgets` (no en `setUp`): su `Completer` creado fuera del *fake async* nunca resuelve. El `MaterialApp` de prueba necesita `localizationsDelegates` (los flujos usan `context.l10n`); los tests que verifican textos fijan `locale: Locale('es')` / `L10n.current` en español
 - **Textos nuevos** — Agregar la clave en `app_es.arb` y `app_en.arb` y correr `flutter gen-l10n` (también se regenera con `flutter pub get` / `flutter run`). No hardcodear strings visibles en la UI
-- **Antes de commitear** — `flutter analyze lib` sin errores y `flutter test test/sharing_test.dart test/session_ui_test.dart test/l10n_test.dart` en verde
+- **Antes de commitear** — `flutter analyze lib` sin errores y `flutter test test/sharing_test.dart test/session_ui_test.dart test/session_sync_test.dart test/tone_sync_test.dart test/l10n_test.dart` en verde
 
 ## Historial de cambios
 
@@ -278,6 +308,12 @@ App Links: `mi-web-fede/public/.well-known/assetlinks.json` incluye `com.saroo.t
 | 2026-11-01 | Renombrar tocando el nombre, compartir junto a guardar, DESHACER al borrar canal, snackbars que se ocultan solos |
 | 2026-11-01 | Limpieza de warnings (`withValues`, imports sin uso, formato) |
 | 2026-11-01 | Idioma inglés (gen-l10n), selector de idioma arriba de todo en Ajustes y acceso al foro |
+| 2026-11-02 | **1.1.0** (`+4`) — Eliminado el login heredado (`AuthGate`): app libre |
+| 2026-11-02 | Integración de `fede_apps_core` (medición de uso, sugerencia de otras apps, *Más apps*) |
+| 2026-11-02 | Biblioteca lista para sync (`rev`, lápidas, purga a 30 días); deshacer restaura el estado exacto |
+| 2026-11-02 | Cuenta del ecosistema (Google) y sincronización de la biblioteca (`LibrarySync`) |
+| 2026-11-06 | Snackbars legibles, `PortraitOnly` en la web de teléfonos, URL limpia tras abrir un link compartido |
+| 2026-11-06 | **1.2.0** (`+5`) — publicada en producción |
 
 ## Seguridad Auditiva
 
