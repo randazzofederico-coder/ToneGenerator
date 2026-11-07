@@ -313,7 +313,7 @@ App Links: `mi-web-fede/public/.well-known/assetlinks.json` incluye `com.saroo.t
 | 2026-11-02 | Biblioteca lista para sync (`rev`, lápidas, purga a 30 días); deshacer restaura el estado exacto |
 | 2026-11-02 | Cuenta del ecosistema (Google) y sincronización de la biblioteca (`LibrarySync`) |
 | 2026-11-06 | Snackbars legibles, `PortraitOnly` en la web de teléfonos, URL limpia tras abrir un link compartido |
-| 2026-11-06 | **1.2.0** (`+5`) — publicada en producción |
+| 2026-11-06 | **1.2.0** (`+5`) — publicada (web; en Android sigue en prueba cerrada) |
 
 ## Seguridad Auditiva
 
